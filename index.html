@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Unity WebGL Loader -->
-    <script src="WebGL/Build/WebGL.loader.js"></script>
+    <script src="WebGL_brotli/Build/WebGL.loader.js"></script>
 </head>
 <body>
     <!-- Loading Screen -->
@@ -141,10 +141,10 @@
             const progressText = document.getElementById('progress-text');
 
             createUnityInstance(canvas, {
-                dataUrl: "WebGL/Build/WebGL.data",
-                frameworkUrl: "WebGL/Build/WebGL.framework.js",
-                codeUrl: "WebGL/Build/WebGL.wasm",
-                streamingAssetsUrl: "WebGL/StreamingAssets",
+                dataUrl: "WebGL_brotli/Build/WebGL.data.br",
+                frameworkUrl: "WebGL_brotli/Build/WebGL.framework.js.br",
+                codeUrl: "WebGL_brotli/Build/WebGL.wasm.br",
+                streamingAssetsUrl: "WebGL_brotli/StreamingAssets",
                 companyName: "Augmento",
                 productName: "Augmento Real Estate Demo",
                 productVersion: "1.0.0",
