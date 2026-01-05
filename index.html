@@ -140,11 +140,18 @@
             const logoFillWrapper = document.getElementById('logo-fill-wrapper');
             const progressText = document.getElementById('progress-text');
 
+            // Detect Safari browser
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+            // Use WebGL_Safari for Safari, WebGL (Brotli) for other browsers
+            const buildPath = isSafari ? "WebGL_Safari" : "WebGL";
+            const fileExtension = isSafari ? "" : ".br";
+
             createUnityInstance(canvas, {
-                dataUrl: "WebGL/Build/WebGL.data.br",
-                frameworkUrl: "WebGL/Build/WebGL.framework.js.br",
-                codeUrl: "WebGL/Build/WebGL.wasm.br",
-                streamingAssetsUrl: "WebGL/StreamingAssets",
+                dataUrl: `${buildPath}/Build/WebGL.data${fileExtension}`,
+                frameworkUrl: `${buildPath}/Build/WebGL.framework.js${fileExtension}`,
+                codeUrl: `${buildPath}/Build/WebGL.wasm${fileExtension}`,
+                streamingAssetsUrl: `${buildPath}/StreamingAssets`,
                 companyName: "Augmento",
                 productName: "Augmento Real Estate Demo",
                 productVersion: "1.0.0",
