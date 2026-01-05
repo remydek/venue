@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Real Estate Viewer | Augmento</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Unity WebGL Loader -->
+    <script src="WebGL/Build/WebGL.loader.js"></script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p>Loading 3D Model...</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <span id="progress-text">0%</span>
+        </div>
+    </div>
+
+    <!-- Unity 3D Canvas -->
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+
+    <!-- UI Overlay -->
+    <div id="ui-overlay">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <img src="logo.svg" alt="Augmento" class="logo-img">
+            </div>
+            <button class="menu-btn" id="menu-btn">
+                <span>MENU</span>
+                <div class="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </button>
+        </header>
+
+        <!-- Mobile Menu -->
+        <nav class="mobile-menu" id="mobile-menu">
+            <ul>
+                <li><a href="#">Overview</a></li>
+                <li><a href="#">Floor Plans</a></li>
+                <li><a href="#">Amenities</a></li>
+                <li><a href="#">Location</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </nav>
+
+        <!-- Bottom Info Panel -->
+        <div class="bottom-panel">
+            <div class="controls">
+                <button class="control-btn" id="settings-btn" title="Settings">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button class="control-btn" id="layers-btn" title="Layers">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="project-info">
+                <h1 class="project-title">Diriyah Media & Innovation District</h1>
+                <a href="#" class="register-btn" id="register-btn">
+                    REGISTER INTEREST
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <!-- Powered By Footer -->
+        <div class="powered-by">
+            <span>Powered by</span>
+            <img src="logo.svg" alt="Augmento" class="powered-by-logo">
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settings-panel">
+        <h3>Information</h3>
+        <p class="settings-info">Use your mouse or touch to interact with the 3D model:</p>
+        <ul class="settings-controls">
+            <li><strong>Rotate:</strong> Click and drag</li>
+            <li><strong>Zoom:</strong> Scroll or pinch</li>
+            <li><strong>Pan:</strong> Right-click and drag</li>
+        </ul>
+    </div>
+
+
+    <!-- Info Popup -->
+    <div class="info-popup" id="info-popup">
+        <div class="info-popup-content">
+            <button class="info-popup-close" id="info-popup-close">&times;</button>
+            <h2>Information</h2>
+            <p>Welcome to the Diriyah Media & Innovation District - a visionary development that combines cutting-edge architecture with sustainable design principles.</p>
+            <p>This state-of-the-art complex features:</p>
+            <ul>
+                <li>Modern office spaces with panoramic views</li>
+                <li>Creative studios and innovation labs</li>
+                <li>Rooftop gardens and green spaces</li>
+                <li>Smart building technology throughout</li>
+            </ul>
+            <p>Click the button below to learn more about investment opportunities.</p>
+            <button class="info-popup-btn" onclick="document.getElementById('register-modal').classList.add('active'); document.getElementById('info-popup').classList.remove('active');">
+                Register Interest
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Register Interest Modal - Ultra Modern Glassmorphism -->
+    <div class="glass-modal" id="register-modal">
+        <div class="glass-modal-backdrop"></div>
+        <div class="glass-modal-content">
+            <button class="glass-close" id="modal-close">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+
+            <div class="glass-header">
+                <div class="glass-title-glow"></div>
+                <h2 class="glass-title">Register Your Interest</h2>
+                <p class="glass-subtitle">Join the future of real estate visualization</p>
+            </div>
+
+            <form id="register-form" class="glass-form">
+                <div class="glass-input-group">
+                    <div class="glass-input-wrapper">
+                        <svg class="glass-input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <input type="text" id="name" name="name" required placeholder="Full Name" class="glass-input">
+                        <div class="glass-input-glow"></div>
+                    </div>
+                </div>
+
+                <div class="glass-input-group">
+                    <div class="glass-input-wrapper">
+                        <svg class="glass-input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <input type="email" id="email" name="email" required placeholder="Email Address" class="glass-input">
+                        <div class="glass-input-glow"></div>
+                    </div>
+                </div>
+
+                <div class="glass-input-group">
+                    <div class="glass-input-wrapper">
+                        <svg class="glass-input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 16.92V19.92C22 20.4728 21.5523 20.92 21 20.92C9.95 20.92 1 11.97 1 0.92C1 0.367715 1.44772 -0.0800018 2 -0.0800018H5C5.55228 -0.0800018 6 0.367715 6 0.92C6 1.96 6.13 2.96 6.35 3.92C6.43 4.27 6.34 4.64 6.11 4.92L4.4 7.13C5.9 10.06 8.88 13.04 11.81 14.54L14.02 12.83C14.27 12.61 14.65 12.51 15 12.6C15.96 12.82 16.96 12.95 18 12.95C18.5523 12.95 19 13.3977 19 13.95V16.95" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <input type="tel" id="phone" name="phone" placeholder="Phone Number (Optional)" class="glass-input">
+                        <div class="glass-input-glow"></div>
+                    </div>
+                </div>
+
+                <div class="glass-input-group">
+                    <div class="glass-input-wrapper glass-textarea-wrapper">
+                        <svg class="glass-input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <textarea id="message" name="message" rows="4" placeholder="Your Message (Optional)" class="glass-input glass-textarea"></textarea>
+                        <div class="glass-input-glow"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="glass-submit-btn">
+                    <span class="glass-btn-text">Submit Registration</span>
+                    <div class="glass-btn-glow"></div>
+                    <svg class="glass-btn-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Console error tracking
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.message, e.filename, e.lineno, e.colno);
+        });
+
+        // Unity WebGL initialization
+        var unityInstance = null;
+
+        // Initialize Unity
+        function initUnity() {
+            const canvas = document.querySelector("#unity-canvas");
+            const loadingScreen = document.getElementById('loading-screen');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+
+            createUnityInstance(canvas, {
+                dataUrl: "WebGL/Build/WebGL.data",
+                frameworkUrl: "WebGL/Build/WebGL.framework.js",
+                codeUrl: "WebGL/Build/WebGL.wasm",
+                streamingAssetsUrl: "WebGL/StreamingAssets",
+                companyName: "Augmento",
+                productName: "Augmento Real Estate Demo",
+                productVersion: "1.0.0",
+            }, (progress) => {
+                // Update loading progress
+                const percent = Math.round(progress * 100);
+                if (progressFill) progressFill.style.width = percent + '%';
+                if (progressText) progressText.textContent = percent + '%';
+            }).then((instance) => {
+                unityInstance = instance;
+                // Hide loading screen
+                if (loadingScreen) {
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 500);
+                }
+            }).catch((message) => {
+                console.error('Unity initialization error:', message);
+                alert('Failed to load 3D viewer: ' + message);
+            });
+        }
+
+        // Start Unity when page loads
+        window.addEventListener('load', initUnity);
+
+        // Prevent Unity from stealing input focus
+        function preventUnityEventCapture() {
+            const inputs = document.querySelectorAll('.glass-input, .glass-textarea');
+            inputs.forEach(input => {
+                input.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    input.focus();
+                });
+                input.addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
+                });
+                input.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+                input.addEventListener('keydown', (e) => {
+                    e.stopPropagation();
+                });
+                input.addEventListener('focus', (e) => {
+                    e.stopPropagation();
+                });
+            });
+        }
+
+        // UI Controls
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize event prevention for form inputs
+            preventUnityEventCapture();
+            // Menu toggle
+            const menuBtn = document.getElementById('menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (menuBtn && mobileMenu) {
+                menuBtn.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('active');
+                    menuBtn.classList.toggle('active');
+                });
+            }
+
+            // Settings panel toggle
+            const settingsBtn = document.getElementById('settings-btn');
+            const settingsPanel = document.getElementById('settings-panel');
+            if (settingsBtn && settingsPanel) {
+                settingsBtn.addEventListener('click', () => {
+                    settingsPanel.classList.toggle('active');
+                });
+            }
+
+            // Register modal
+            const registerBtn = document.getElementById('register-btn');
+            const registerModal = document.getElementById('register-modal');
+            const modalClose = document.getElementById('modal-close');
+
+            if (registerBtn && registerModal) {
+                registerBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    registerModal.classList.add('active');
+                });
+            }
+
+            if (modalClose && registerModal) {
+                modalClose.addEventListener('click', () => {
+                    registerModal.classList.remove('active');
+                });
+            }
+
+            // Close modal on outside click
+            if (registerModal) {
+                registerModal.addEventListener('click', (e) => {
+                    if (e.target === registerModal) {
+                        registerModal.classList.remove('active');
+                    }
+                });
+            }
+
+            // Info popup close
+            const infoPopupClose = document.getElementById('info-popup-close');
+            const infoPopup = document.getElementById('info-popup');
+            if (infoPopupClose && infoPopup) {
+                infoPopupClose.addEventListener('click', () => {
+                    infoPopup.classList.remove('active');
+                });
+            }
+
+            // Form submission
+            const registerForm = document.getElementById('register-form');
+            if (registerForm) {
+                registerForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    // Get form data
+                    const formData = new FormData(registerForm);
+                    const data = {
+                        name: formData.get('name'),
+                        email: formData.get('email'),
+                        phone: formData.get('phone'),
+                        message: formData.get('message')
+                    };
+
+                    try {
+                        // Send to FormSubmit.co (free service that forwards to email)
+                        const response = await fetch('https://formsubmit.co/remy@augmento.com', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                name: data.name,
+                                email: data.email,
+                                phone: data.phone,
+                                message: data.message,
+                                _subject: 'New Interest Registration - 3D Real Estate Viewer',
+                                _template: 'table'
+                            })
+                        });
+
+                        if (response.ok) {
+                            alert('Thank you for your interest! We will contact you soon.');
+                            registerModal.classList.remove('active');
+                            registerForm.reset();
+                        } else {
+                            throw new Error('Submission failed');
+                        }
+                    } catch (error) {
+                        console.error('Form submission error:', error);
+                        alert('There was an error submitting your request. Please try again or contact us directly at remy@augmento.com');
+                    }
+                });
+            }
+
+            // Close panels with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (settingsPanel) settingsPanel.classList.remove('active');
+                    if (registerModal) registerModal.classList.remove('active');
+                    if (mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                        menuBtn.classList.remove('active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
