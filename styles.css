@@ -31,7 +31,7 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: #000000;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -49,45 +49,65 @@ html, body {
     color: var(--text-light);
 }
 
-.spinner {
-    width: 60px;
-    height: 60px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top-color: var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 20px;
+/* Logo Loader */
+.logo-loader {
+    margin-bottom: 30px;
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+.logo-container {
+    position: relative;
+    width: 300px;
+    height: auto;
+    margin: 0 auto;
 }
 
-.loader-content p {
-    font-size: 16px;
-    margin-bottom: 15px;
-    color: var(--text-muted);
+/* White outline logo (base layer) */
+.logo-outline {
+    width: 100%;
+    height: auto;
+    filter: brightness(0) invert(1);
+    opacity: 0.3;
 }
 
-.progress-bar {
-    width: 200px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-    overflow: hidden;
-    margin: 0 auto 10px;
-}
-
-.progress-fill {
+/* Purple filled logo (animated layer) */
+.logo-fill-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     height: 100%;
-    background: var(--primary-color);
-    width: 0%;
-    transition: width 0.3s ease;
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 0.3s ease;
+}
+
+.logo-fill {
+    width: 100%;
+    height: auto;
+    filter: brightness(0) saturate(100%) invert(29%) sepia(97%) saturate(3066%) hue-rotate(241deg) brightness(99%) contrast(98%);
 }
 
 #progress-text {
-    font-size: 14px;
-    color: var(--text-muted);
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 500;
+    letter-spacing: 2px;
+}
+
+/* Responsive logo loader */
+@media (max-width: 768px) {
+    .logo-container {
+        width: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-container {
+        width: 200px;
+    }
+
+    #progress-text {
+        font-size: 14px;
+    }
 }
 
 /* Unity Canvas */
@@ -321,7 +341,7 @@ html, body {
 }
 
 .powered-by-logo {
-    height: 14px;
+    height: 18px;
     width: auto;
 }
 
@@ -609,104 +629,76 @@ input:checked + .slider:before {
     font-weight: 400;
 }
 
-/* Form Styling */
-.glass-form {
+/* Button Container */
+.glass-buttons {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
     pointer-events: auto;
 }
 
-.glass-input-group {
+/* Action Buttons */
+.glass-action-btn {
     position: relative;
-}
-
-.glass-input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    z-index: 1;
-}
-
-.glass-textarea-wrapper {
-    align-items: flex-start;
-}
-
-.glass-input-icon {
-    position: absolute;
-    left: 18px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    color: rgba(255, 255, 255, 0.5);
-    transition: all 0.3s ease;
-    z-index: 2;
-}
-
-.glass-textarea-wrapper .glass-input-icon {
-    top: 22px;
-    transform: translateY(0);
-}
-
-.glass-input {
     width: 100%;
-    padding: 16px 16px 16px 52px;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 18px 32px;
+    border: none;
     border-radius: 16px;
     color: white;
     font-family: inherit;
-    font-size: 15px;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 10;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-decoration: none;
     pointer-events: auto;
-    cursor: text;
 }
 
-.glass-textarea {
-    padding-top: 16px;
-    resize: vertical;
-    min-height: 120px;
+/* Primary Button - Visit Diriyah */
+.glass-btn-primary {
+    background: linear-gradient(135deg, #00B4D8 0%, #0096B4 100%);
+    box-shadow:
+        0 4px 20px rgba(0, 180, 216, 0.4),
+        0 0 40px rgba(0, 180, 216, 0.2);
+    z-index: 1;
 }
 
-.glass-input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+.glass-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 6px 30px rgba(0, 180, 216, 0.6),
+        0 0 60px rgba(0, 180, 216, 0.4);
 }
 
-.glass-input:focus {
-    outline: none;
+.glass-btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Secondary Button - Contact Augmento */
+.glass-btn-secondary {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(0, 180, 216, 0.5);
-    box-shadow: 0 0 20px rgba(0, 180, 216, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-.glass-input:focus + .glass-input-glow {
-    opacity: 1;
+.glass-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
-.glass-input:focus ~ .glass-input-icon {
-    color: #00B4D8;
+.glass-btn-secondary:active {
+    transform: translateY(0);
 }
 
-.glass-input-glow {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 16px;
-    background: radial-gradient(circle at center, rgba(0, 180, 216, 0.2), transparent 70%);
-    filter: blur(20px);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    z-index: 0;
-}
-
-/* Submit Button with Bloom Effect */
+/* Legacy Submit Button - Keep for Compatibility */
 .glass-submit-btn {
     position: relative;
     width: 100%;
@@ -752,6 +744,16 @@ input:checked + .slider:before {
     width: 20px;
     height: 20px;
     transition: transform 0.3s ease;
+}
+
+.glass-btn-icon {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+}
+
+.glass-action-btn:hover .glass-btn-arrow {
+    transform: translateX(4px);
 }
 
 .glass-submit-btn:hover .glass-btn-arrow {
@@ -877,7 +879,7 @@ input:checked + .slider:before {
     }
 
     .powered-by-logo {
-        height: 12px;
+        height: 16px;
     }
 
     .settings-panel {
