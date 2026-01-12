@@ -16,11 +16,6 @@ import {
 import * as dat from 'dat.gui';
 
 // Type definitions
-interface CourtLabel {
-    element: HTMLElement;
-    position: THREE.Vector3;
-}
-
 interface DevSettings {
     cameraX: number;
     cameraY: number;
@@ -47,9 +42,6 @@ interface DevSettings {
     vignetteOffset: number;
     vignetteDarkness: number;
     modelScale: number;
-    courtLabelX: number;
-    courtLabelY: number;
-    courtLabelZ: number;
     fitToView: () => void;
     logCamera: () => void;
 }
@@ -78,7 +70,6 @@ let camera: THREE.PerspectiveCamera;
 let renderer: THREE.WebGLRenderer;
 let controls: OrbitControls;
 let model: THREE.Group;
-let courtLabels: CourtLabel[] = [];
 let ambientLight: THREE.AmbientLight;
 let glbLights: THREE.Light[] = [];
 let gui: dat.GUI;
@@ -129,9 +120,6 @@ const devSettings: DevSettings = {
     vignetteOffset: 0.3,
     vignetteDarkness: 0.5,
     modelScale: 2.5,
-    courtLabelX: 0,
-    courtLabelY: 15,
-    courtLabelZ: 0,
     fitToView: () => fitCameraToModel(),
     logCamera: () => {
         console.log('Camera Position:', camera.position);
@@ -256,12 +244,6 @@ function initThreeJS(): void {
             const point = intersects[0].point;
             console.log('=== CLICKED POSITION ===');
             console.log(`X: ${point.x.toFixed(2)}, Y: ${point.y.toFixed(2)}, Z: ${point.z.toFixed(2)}`);
-
-            devSettings.courtLabelX = point.x;
-            devSettings.courtLabelY = point.y + 3;
-            devSettings.courtLabelZ = point.z;
-            updateCourtLabelPosition();
-            if (gui) gui.updateDisplay();
         }
     });
 
@@ -404,7 +386,6 @@ function initThreeJS(): void {
             console.log('Model center:', center);
 
             fitCameraToModel();
-            createCourtLabels(size);
             populateMeshDebugList();
             populateGLBControls();
 
@@ -432,72 +413,6 @@ function initThreeJS(): void {
     window.addEventListener('resize', onWindowResize);
     initDevGUI();
     animate(0);
-}
-
-// Create VIP Table labels
-function createCourtLabels(modelSize: THREE.Vector3): void {
-    const labelsContainer = document.getElementById('court-labels');
-    if (!labelsContainer) return;
-
-    let vipTable1Mesh: THREE.Object3D | null = null;
-    const vipTable1Position = new THREE.Vector3(0, 15, 0);
-
-    model.traverse((child: THREE.Object3D) => {
-        if ((child as THREE.Mesh).isMesh || child.isObject3D) {
-            if (child.name) {
-                console.log('Found object:', child.name);
-            }
-            if (child.name && (child.name === 'vip_table_1' || child.name.toLowerCase() === 'vip_table_1')) {
-                vipTable1Mesh = child;
-                console.log('Found VIP Table 1 mesh:', child.name);
-            }
-        }
-    });
-
-    if (vipTable1Mesh !== null) {
-        const mesh = vipTable1Mesh as THREE.Object3D;
-        const worldPos = new THREE.Vector3();
-        mesh.getWorldPosition(worldPos);
-
-        const bbox = new THREE.Box3().setFromObject(mesh);
-        const meshTop = bbox.max.y;
-        const meshCenterX = (bbox.max.x + bbox.min.x) / 2;
-        const meshCenterZ = (bbox.max.z + bbox.min.z) / 2;
-
-        vipTable1Position.set(meshCenterX, meshTop + 1.5, meshCenterZ);
-
-        console.log('VIP Table 1 bounding box:', bbox);
-        console.log('Label positioned at:', vipTable1Position);
-
-        devSettings.courtLabelX = vipTable1Position.x;
-        devSettings.courtLabelY = vipTable1Position.y;
-        devSettings.courtLabelZ = vipTable1Position.z;
-    } else {
-        console.warn('vip_table_1 mesh not found in model.');
-    }
-
-    const label = document.createElement('div');
-    label.className = 'court-label vip-label';
-    label.innerHTML = `
-        <div class="vip-tooltip">
-            <span class="vip-icon">✦</span>
-            <span class="court-label-text">VIP Table 1</span>
-            <span class="vip-status">Available</span>
-        </div>
-    `;
-    label.id = 'vip-table-1-label';
-    labelsContainer.appendChild(label);
-
-    courtLabels.push({
-        element: label,
-        position: vipTable1Position.clone()
-    });
-
-    console.log('VIP Table 1 label created at:', vipTable1Position.x, vipTable1Position.y, vipTable1Position.z);
-
-    if (gui) {
-        gui.updateDisplay();
-    }
 }
 
 // Populate debug mesh list panel
@@ -805,18 +720,6 @@ function applyLightSettings(): void {
     console.log('Light settings applied');
 }
 
-// Update VIP Table 1 label position from GUI controls
-function updateCourtLabelPosition(): void {
-    if (courtLabels.length > 0) {
-        courtLabels[0].position.set(
-            devSettings.courtLabelX,
-            devSettings.courtLabelY,
-            devSettings.courtLabelZ
-        );
-        console.log('VIP Table 1 position updated to:', devSettings.courtLabelX, devSettings.courtLabelY, devSettings.courtLabelZ);
-    }
-}
-
 // Fit camera to model
 function fitCameraToModel(): void {
     if (!model) return;
@@ -982,13 +885,6 @@ function initDevGUI(): void {
         }
     });
 
-    // VIP Table Label Position
-    const vipLabelFolder = gui.addFolder('VIP Table 1 Position');
-    vipLabelFolder.add(devSettings, 'courtLabelX', -100, 100).step(0.5).name('X').onChange(updateCourtLabelPosition);
-    vipLabelFolder.add(devSettings, 'courtLabelY', 0, 50).step(0.5).name('Y (Height)').onChange(updateCourtLabelPosition);
-    vipLabelFolder.add(devSettings, 'courtLabelZ', -100, 100).step(0.5).name('Z').onChange(updateCourtLabelPosition);
-    vipLabelFolder.open();
-
     // Actions
     const actionsFolder = gui.addFolder('Actions');
     actionsFolder.add(devSettings, 'fitToView').name('Fit to View');
@@ -1023,25 +919,6 @@ function initDevGUI(): void {
     });
 }
 
-// Update court label positions
-function updateCourtLabels(): void {
-    courtLabels.forEach((label) => {
-        const screenPosition = label.position.clone();
-        screenPosition.project(camera);
-
-        const x = (screenPosition.x * 0.5 + 0.5) * window.innerWidth;
-        const y = (-(screenPosition.y * 0.5) + 0.5) * window.innerHeight;
-
-        if (screenPosition.z < 1) {
-            label.element.style.display = 'block';
-            label.element.style.left = `${x}px`;
-            label.element.style.top = `${y}px`;
-        } else {
-            label.element.style.display = 'none';
-        }
-    });
-}
-
 function onWindowResize(): void {
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -1054,7 +931,6 @@ function onWindowResize(): void {
 function animate(time: number): void {
     requestAnimationFrame(animate);
     controls.update();
-    updateCourtLabels();
     composer.render();
 }
 
