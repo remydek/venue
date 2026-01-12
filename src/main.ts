@@ -780,27 +780,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Camera view buttons
-    const vipViewBtn = document.getElementById('vip-view-btn');
+    const tableBBtn = document.getElementById('table-b-btn');
+    const tableB1Btn = document.getElementById('table-b1-btn');
     const topViewBtn = document.getElementById('top-view-btn');
     const freeViewBtn = document.getElementById('free-view-btn');
 
-    if (vipViewBtn) {
-        vipViewBtn.addEventListener('click', () => {
+    // Helper function to find camera by name
+    const findCameraByName = (name: string): THREE.Camera | undefined => {
+        return glbCameras.find(cam => cam.name.toLowerCase() === name.toLowerCase());
+    };
+
+    if (tableBBtn) {
+        tableBBtn.addEventListener('click', () => {
             unlockCamera();
-            if (glbCameras.length > 1) {
-                flyToCamera(glbCameras[1], false);
+            const cam = findCameraByName('Table B');
+            if (cam) {
+                flyToCamera(cam, false);
             } else {
-                console.warn('Camera 2 not found in GLB');
+                console.warn('Camera "Table B" not found in GLB');
+            }
+        });
+    }
+
+    if (tableB1Btn) {
+        tableB1Btn.addEventListener('click', () => {
+            unlockCamera();
+            const cam = findCameraByName('Table B1');
+            if (cam) {
+                flyToCamera(cam, false);
+            } else {
+                console.warn('Camera "Table B1" not found in GLB');
             }
         });
     }
 
     if (topViewBtn) {
         topViewBtn.addEventListener('click', () => {
-            if (glbCameras.length > 0) {
-                flyToCamera(glbCameras[0], true);
+            const cam = findCameraByName('camera_top');
+            if (cam) {
+                flyToCamera(cam, true);
             } else {
-                console.warn('No cameras found in GLB');
+                console.warn('Camera "camera_top" not found in GLB');
             }
         });
     }
