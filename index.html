@@ -33,15 +33,6 @@
     <!-- Court Labels Container -->
     <div id="court-labels"></div>
 
-    <!-- Debug Mesh List Panel -->
-    <div id="mesh-debug-panel">
-        <div class="mesh-debug-header">
-            <span>GLB Meshes</span>
-            <button id="mesh-debug-toggle">−</button>
-        </div>
-        <div id="mesh-debug-list"></div>
-    </div>
-
     <!-- Camera View Buttons -->
     <div id="camera-view-buttons">
         <button class="camera-view-btn" id="table-b-btn">
@@ -78,7 +69,7 @@
             <div class="project-info">
                 <h1 class="project-title">HÏ Ibiza VIP Booking</h1>
                 <a href="#" class="register-btn" id="register-btn">
-                    REGISTER INTEREST
+                    JOIN WAITLIST
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -126,10 +117,10 @@
     </div>
 
 
-    <!-- Register Interest Modal - Ultra Modern Glassmorphism -->
+    <!-- Waitlist Modal - Ultra Modern Glassmorphism -->
     <div class="glass-modal" id="register-modal">
         <div class="glass-modal-backdrop"></div>
-        <div class="glass-modal-content">
+        <div class="glass-modal-content waitlist-modal">
             <button class="glass-close" id="modal-close">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -138,26 +129,64 @@
 
             <div class="glass-header">
                 <div class="glass-title-glow"></div>
-                <h2 class="glass-title">Explore Padel Edition</h2>
-                <p class="glass-subtitle">Discover premium padel in Dubai</p>
+                <div class="waitlist-badge">LIMITED AVAILABILITY</div>
+                <h2 class="glass-title">VIP Table Waitlist</h2>
+                <p class="glass-subtitle">Secure your spot for the most exclusive tables at HÏ Ibiza</p>
             </div>
 
-            <div class="glass-buttons">
-                <a href="#" target="_blank" class="glass-action-btn glass-btn-primary">
-                    <span class="glass-btn-text">Learn More</span>
-                    <div class="glass-btn-glow"></div>
-                    <svg class="glass-btn-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-
-                <a href="mailto:remy@augmento.com" class="glass-action-btn glass-btn-secondary">
-                    <span class="glass-btn-text">Contact Augmento</span>
-                    <svg class="glass-btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M3 8L10.89 13.26C11.2187 13.4793 11.6049 13.5963 12 13.5963C12.3951 13.5963 12.7813 13.4793 13.11 13.26L21 8M5 19H19C19.5304 19 20.0391 18.7893 20.4142 18.4142C20.7893 18.0391 21 17.5304 21 17V7C21 6.46957 20.7893 5.96086 20.4142 5.58579C20.0391 5.21071 19.5304 5 19 5H5C4.46957 5 3.96086 5.21071 3.58579 5.58579C3.21071 5.96086 3 6.46957 3 7V17C3 17.5304 3.21071 18.0391 3.58579 18.4142C3.96086 18.7893 4.46957 19 5 19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
+            <div class="waitlist-urgency">
+                <div class="urgency-item">
+                    <span class="urgency-number" id="spots-left">7</span>
+                    <span class="urgency-label">Spots Left</span>
+                </div>
+                <div class="urgency-divider"></div>
+                <div class="urgency-item">
+                    <span class="urgency-number" id="people-waiting">243</span>
+                    <span class="urgency-label">People Waiting</span>
+                </div>
             </div>
+
+            <form class="waitlist-form" id="waitlist-form">
+                <div class="form-group">
+                    <input type="text" id="waitlist-name" placeholder="Full Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" id="waitlist-email" placeholder="Email Address" required>
+                </div>
+                <div class="form-group">
+                    <input type="tel" id="waitlist-phone" placeholder="Phone Number">
+                </div>
+                <div class="form-group">
+                    <select id="waitlist-table" required>
+                        <option value="" disabled selected>Select Preferred Table</option>
+                        <option value="table-b">Table B - Premium View</option>
+                        <option value="table-b1">Table B1 - VIP Section</option>
+                        <option value="any">Any Available</option>
+                    </select>
+                </div>
+                <button type="submit" class="waitlist-submit">
+                    <span class="submit-text">JOIN WAITLIST NOW</span>
+                    <span class="submit-loader"></span>
+                </button>
+            </form>
+
+            <p class="waitlist-disclaimer">By joining, you agree to be contacted about VIP table availability. Priority access given to early signups.</p>
+        </div>
+
+        <!-- Success State -->
+        <div class="glass-modal-content waitlist-success" id="waitlist-success" style="display: none;">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h2 class="glass-title">You're on the list!</h2>
+            <p class="glass-subtitle">We'll contact you as soon as a spot becomes available. Check your email for confirmation.</p>
+            <div class="success-position">
+                <span>Your position:</span>
+                <strong>#<span id="queue-position">244</span></strong>
+            </div>
+            <button class="waitlist-close-btn" id="success-close">CLOSE</button>
         </div>
     </div>
 

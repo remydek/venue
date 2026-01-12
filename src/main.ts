@@ -35,6 +35,9 @@ interface DevSettings {
     vignetteOffset: number;
     vignetteDarkness: number;
     modelScale: number;
+    topViewZoom: number;
+    topViewMinZoom: number;
+    topViewMaxZoom: number;
     fitToView: () => void;
     logCamera: () => void;
 }
@@ -102,6 +105,9 @@ const devSettings: DevSettings = {
     vignetteOffset: 0.3,
     vignetteDarkness: 0.5,
     modelScale: 2.5,
+    topViewZoom: 1.5,
+    topViewMinZoom: 20,
+    topViewMaxZoom: 150,
     fitToView: () => fitCameraToModel(),
     logCamera: () => {
         console.log('Camera Position:', camera.position);
@@ -206,8 +212,8 @@ function initThreeJS(): void {
     controls.dampingFactor = 0.05;
     controls.enablePan = true;
     controls.enableZoom = true;
-    controls.minDistance = 0.1;
-    controls.maxDistance = 2000;
+    controls.minDistance = 5;
+    controls.maxDistance = 200;
     controls.maxPolarAngle = Math.PI / 2 - 0.05;
 
     // Raycaster for click-to-position
@@ -370,6 +376,14 @@ function initThreeJS(): void {
             fitCameraToModel();
             populateGLBControls();
 
+            // Start with camera_b view
+            const startCamera = glbCameras.find(cam => cam.name.toLowerCase() === 'camera_b');
+            if (startCamera) {
+                setTimeout(() => {
+                    flyToCamera(startCamera, false);
+                }, 100);
+            }
+
             // Hide loading screen
             if (loadingScreen) {
                 loadingScreen.style.opacity = '0';
@@ -485,12 +499,29 @@ function flyToCamera(targetCam: THREE.Camera, locked = false): void {
 
     const lookAtPoint = targetPos.clone().add(targetDir.multiplyScalar(10));
 
+    // For camera_top, apply zoom multiplier from settings
+    if (targetCam.name.toLowerCase() === 'camera_top' && devSettings.topViewZoom !== 1.0) {
+        const zoomMultiplier = devSettings.topViewZoom;
+        // Move camera closer (zoom > 1) or farther (zoom < 1) along the view direction
+        const direction = lookAtPoint.clone().sub(targetPos).normalize();
+        const currentDistance = targetPos.distanceTo(lookAtPoint);
+        const newDistance = currentDistance / zoomMultiplier;
+        targetPos.copy(lookAtPoint).sub(direction.multiplyScalar(newDistance));
+        console.log(`Top View zoom applied: ${zoomMultiplier}x (distance: ${currentDistance.toFixed(2)} -> ${newDistance.toFixed(2)})`);
+    }
+
     const startPos = camera.position.clone();
     const startTarget = controls.target.clone();
     const duration = 1500;
     const startTime = performance.now();
 
     cameraLocked = locked;
+
+    // Store original limits and temporarily remove them during animation
+    const origMinDist = controls.minDistance;
+    const origMaxDist = controls.maxDistance;
+    controls.minDistance = 0;
+    controls.maxDistance = Infinity;
 
     function animateFly(currentTime: number): void {
         const elapsed = currentTime - startTime;
@@ -507,6 +538,10 @@ function flyToCamera(targetCam: THREE.Camera, locked = false): void {
         if (progress < 1) {
             requestAnimationFrame(animateFly);
         } else {
+            // Keep limits open for camera views (don't restore restrictive limits)
+            controls.minDistance = 0.1;
+            controls.maxDistance = 500;
+
             if (locked) {
                 controls.enableRotate = false;
                 controls.enablePan = false;
@@ -689,6 +724,12 @@ function initDevGUI(): void {
         }
     });
 
+    // Top View folder
+    const topViewFolder = gui.addFolder('Top View');
+    topViewFolder.add(devSettings, 'topViewZoom', 0.1, 5).name('Zoom Multiplier').onChange((v: number) => {
+        console.log('Top View Zoom set to:', v);
+    });
+
     // Actions
     const actionsFolder = gui.addFolder('Actions');
     actionsFolder.add(devSettings, 'fitToView').name('Fit to View');
@@ -771,6 +812,60 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Waitlist form handling
+    const waitlistForm = document.getElementById('waitlist-form') as HTMLFormElement;
+    const waitlistModal = document.querySelector('.waitlist-modal');
+    const waitlistSuccess = document.getElementById('waitlist-success');
+    const successClose = document.getElementById('success-close');
+    const queuePosition = document.getElementById('queue-position');
+    const peopleWaiting = document.getElementById('people-waiting');
+
+    if (waitlistForm) {
+        waitlistForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const submitBtn = waitlistForm.querySelector('.waitlist-submit');
+
+            if (submitBtn) {
+                submitBtn.classList.add('loading');
+
+                // Simulate API call
+                setTimeout(() => {
+                    submitBtn.classList.remove('loading');
+
+                    // Update queue position
+                    const currentWaiting = parseInt(peopleWaiting?.textContent || '243');
+                    if (queuePosition) {
+                        queuePosition.textContent = String(currentWaiting + 1);
+                    }
+
+                    // Show success state
+                    if (waitlistModal && waitlistSuccess) {
+                        (waitlistModal as HTMLElement).style.display = 'none';
+                        waitlistSuccess.style.display = 'block';
+                    }
+                }, 1500);
+            }
+        });
+    }
+
+    if (successClose && registerModal) {
+        successClose.addEventListener('click', () => {
+            registerModal.classList.remove('active');
+            // Reset form and views after close
+            setTimeout(() => {
+                if (waitlistModal) {
+                    (waitlistModal as HTMLElement).style.display = 'block';
+                }
+                if (waitlistSuccess) {
+                    waitlistSuccess.style.display = 'none';
+                }
+                if (waitlistForm) {
+                    waitlistForm.reset();
+                }
+            }, 300);
+        });
+    }
+
     const infoPopupClose = document.getElementById('info-popup-close');
     const infoPopup = document.getElementById('info-popup');
     if (infoPopupClose && infoPopup) {
@@ -787,40 +882,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper function to find camera by name
     const findCameraByName = (name: string): THREE.Camera | undefined => {
-        return glbCameras.find(cam => cam.name.toLowerCase() === name.toLowerCase());
+        console.log('Looking for camera:', name);
+        console.log('Available cameras:', glbCameras.map(c => c.name));
+        const found = glbCameras.find(cam => cam.name.toLowerCase() === name.toLowerCase());
+        console.log('Found:', found ? found.name : 'NOT FOUND');
+        return found;
     };
 
     if (tableBBtn) {
         tableBBtn.addEventListener('click', () => {
+            console.log('Table B button clicked');
             unlockCamera();
-            const cam = findCameraByName('Table B');
+            const cam = findCameraByName('camera_b');
             if (cam) {
                 flyToCamera(cam, false);
             } else {
-                console.warn('Camera "Table B" not found in GLB');
+                console.warn('Camera "camera_b" not found in GLB. Available:', glbCameras.map(c => c.name));
             }
         });
     }
 
     if (tableB1Btn) {
         tableB1Btn.addEventListener('click', () => {
+            console.log('Table B1 button clicked');
             unlockCamera();
-            const cam = findCameraByName('Table B1');
+            const cam = findCameraByName('camera_b1');
             if (cam) {
                 flyToCamera(cam, false);
             } else {
-                console.warn('Camera "Table B1" not found in GLB');
+                console.warn('Camera "camera_b1" not found in GLB. Available:', glbCameras.map(c => c.name));
             }
         });
     }
 
     if (topViewBtn) {
         topViewBtn.addEventListener('click', () => {
+            console.log('Top View button clicked');
             const cam = findCameraByName('camera_top');
             if (cam) {
                 flyToCamera(cam, true);
             } else {
-                console.warn('Camera "camera_top" not found in GLB');
+                console.warn('Camera "camera_top" not found in GLB. Available:', glbCameras.map(c => c.name));
             }
         });
     }
