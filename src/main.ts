@@ -417,7 +417,7 @@ function initThreeJS(): void {
             }
         },
         (xhr) => {
-            const percent = Math.round((xhr.loaded / xhr.total) * 100);
+            const percent = xhr.total > 0 ? Math.min(Math.round((xhr.loaded / xhr.total) * 100), 100) : 0;
             if (logoFillWrapper) {
                 logoFillWrapper.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
             }
