@@ -17,13 +17,6 @@ import * as dat from 'dat.gui';
 
 // Type definitions
 interface DevSettings {
-    cameraX: number;
-    cameraY: number;
-    cameraZ: number;
-    fov: number;
-    targetX: number;
-    targetY: number;
-    targetZ: number;
     exposure: number;
     toneMapping: string;
     ambientIntensity: number;
@@ -89,19 +82,8 @@ let glbSpotLights: THREE.SpotLight[] = [];
 // Track if camera controls are locked (for Top View)
 let cameraLocked = false;
 
-// Highlight tracking
-let highlightedMesh: THREE.Mesh | null = null;
-let originalMaterial: THREE.Material | THREE.Material[] | null = null;
-
 // Dev controls settings
 const devSettings: DevSettings = {
-    cameraX: 30,
-    cameraY: 20,
-    cameraZ: 30,
-    fov: 45,
-    targetX: 0,
-    targetY: 2,
-    targetZ: 0,
     exposure: -2,
     toneMapping: 'Linear',
     ambientIntensity: 0.3,
@@ -386,7 +368,6 @@ function initThreeJS(): void {
             console.log('Model center:', center);
 
             fitCameraToModel();
-            populateMeshDebugList();
             populateGLBControls();
 
             // Hide loading screen
@@ -413,130 +394,6 @@ function initThreeJS(): void {
     window.addEventListener('resize', onWindowResize);
     initDevGUI();
     animate(0);
-}
-
-// Populate debug mesh list panel
-function populateMeshDebugList(): void {
-    const listContainer = document.getElementById('mesh-debug-list');
-    if (!listContainer) return;
-
-    listContainer.innerHTML = '';
-
-    const meshes: { name: string; type: string; obj: THREE.Mesh }[] = [];
-    const lights: { name: string; type: string; obj: THREE.Light }[] = [];
-    const empties: { name: string; type: string; obj: THREE.Object3D }[] = [];
-
-    model.traverse((child: THREE.Object3D) => {
-        if (child.name) {
-            if ((child as THREE.Mesh).isMesh) {
-                meshes.push({ name: child.name, type: 'mesh', obj: child as THREE.Mesh });
-            } else if ((child as THREE.Light).isLight) {
-                lights.push({ name: child.name, type: child.type, obj: child as THREE.Light });
-            } else if (child.isObject3D && !(child as THREE.Mesh).isMesh && !(child as THREE.Light).isLight) {
-                empties.push({ name: child.name, type: 'empty/group', obj: child });
-            }
-        }
-    });
-
-    // Meshes section
-    if (meshes.length > 0) {
-        const meshHeader = document.createElement('div');
-        meshHeader.className = 'mesh-debug-section';
-        meshHeader.textContent = `Meshes (${meshes.length})`;
-        listContainer.appendChild(meshHeader);
-
-        meshes.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'mesh-debug-item mesh-item';
-            div.textContent = item.name;
-            div.title = 'Click to highlight';
-            div.addEventListener('click', () => highlightMesh(item.obj));
-            listContainer.appendChild(div);
-        });
-    }
-
-    // Lights section
-    if (lights.length > 0) {
-        const lightHeader = document.createElement('div');
-        lightHeader.className = 'mesh-debug-section';
-        lightHeader.textContent = `Lights (${lights.length})`;
-        listContainer.appendChild(lightHeader);
-
-        lights.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'mesh-debug-item light-item';
-            div.textContent = `${item.name} (${item.type})`;
-            listContainer.appendChild(div);
-        });
-    }
-
-    // Empties section
-    if (empties.length > 0) {
-        const emptyHeader = document.createElement('div');
-        emptyHeader.className = 'mesh-debug-section';
-        emptyHeader.textContent = `Empties/Groups (${empties.length})`;
-        listContainer.appendChild(emptyHeader);
-
-        empties.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'mesh-debug-item empty-item';
-            div.textContent = item.name;
-            div.title = 'Click to focus camera';
-            div.addEventListener('click', () => focusOnObject(item.obj));
-            listContainer.appendChild(div);
-        });
-    }
-
-    // Toggle panel
-    const toggleBtn = document.getElementById('mesh-debug-toggle');
-    const panel = document.getElementById('mesh-debug-panel');
-    if (toggleBtn && panel) {
-        toggleBtn.addEventListener('click', () => {
-            panel.classList.toggle('collapsed');
-            toggleBtn.textContent = panel.classList.contains('collapsed') ? '+' : '−';
-        });
-    }
-}
-
-// Highlight a mesh temporarily
-function highlightMesh(mesh: THREE.Mesh): void {
-    if (highlightedMesh && originalMaterial) {
-        highlightedMesh.material = originalMaterial;
-    }
-
-    originalMaterial = mesh.material;
-    highlightedMesh = mesh;
-
-    const highlightMat = new THREE.MeshBasicMaterial({
-        color: 0xff00ff,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.8
-    });
-    mesh.material = highlightMat;
-
-    focusOnObject(mesh);
-
-    const worldPos = new THREE.Vector3();
-    mesh.getWorldPosition(worldPos);
-    console.log(`Mesh "${mesh.name}" world position:`, worldPos);
-
-    setTimeout(() => {
-        if (highlightedMesh === mesh && originalMaterial) {
-            mesh.material = originalMaterial;
-            highlightedMesh = null;
-            originalMaterial = null;
-        }
-    }, 3000);
-}
-
-// Focus camera on an object
-function focusOnObject(obj: THREE.Object3D): void {
-    const worldPos = new THREE.Vector3();
-    obj.getWorldPosition(worldPos);
-    controls.target.copy(worldPos);
-    controls.update();
-    console.log(`Focused on "${obj.name}" at:`, worldPos);
 }
 
 // Populate GLB camera buttons and light controls
@@ -647,14 +504,6 @@ function flyToCamera(targetCam: THREE.Camera, locked = false): void {
         controls.target.lerpVectors(startTarget, lookAtPoint, eased);
         controls.update();
 
-        devSettings.cameraX = camera.position.x;
-        devSettings.cameraY = camera.position.y;
-        devSettings.cameraZ = camera.position.z;
-        devSettings.targetX = controls.target.x;
-        devSettings.targetY = controls.target.y;
-        devSettings.targetZ = controls.target.z;
-        if (gui) gui.updateDisplay();
-
         if (progress < 1) {
             requestAnimationFrame(animateFly);
         } else {
@@ -742,20 +591,8 @@ function fitCameraToModel(): void {
         finalDistance * 0.7
     );
 
-    devSettings.cameraX = camera.position.x;
-    devSettings.cameraY = camera.position.y;
-    devSettings.cameraZ = camera.position.z;
-
     controls.target.set(0, modelHeight * 0.3, 0);
-    devSettings.targetX = controls.target.x;
-    devSettings.targetY = controls.target.y;
-    devSettings.targetZ = controls.target.z;
-
     controls.update();
-
-    if (gui) {
-        gui.updateDisplay();
-    }
 
     console.log('Model size:', size);
     console.log('Final distance:', finalDistance);
@@ -766,36 +603,6 @@ function fitCameraToModel(): void {
 function initDevGUI(): void {
     gui = new dat.GUI({ width: 300 });
     gui.domElement.style.marginTop = '50px';
-
-    // Camera folder
-    const cameraFolder = gui.addFolder('Camera Position');
-    cameraFolder.add(devSettings, 'cameraX', -100, 100).onChange((v: number) => {
-        camera.position.x = v;
-    });
-    cameraFolder.add(devSettings, 'cameraY', -100, 100).onChange((v: number) => {
-        camera.position.y = v;
-    });
-    cameraFolder.add(devSettings, 'cameraZ', -100, 100).onChange((v: number) => {
-        camera.position.z = v;
-    });
-    cameraFolder.add(devSettings, 'fov', 20, 120).onChange((v: number) => {
-        camera.fov = v;
-        camera.updateProjectionMatrix();
-    });
-    cameraFolder.open();
-
-    // Target folder
-    const targetFolder = gui.addFolder('Camera Target');
-    targetFolder.add(devSettings, 'targetX', -50, 50).onChange((v: number) => {
-        controls.target.x = v;
-    });
-    targetFolder.add(devSettings, 'targetY', -20, 50).onChange((v: number) => {
-        controls.target.y = v;
-    });
-    targetFolder.add(devSettings, 'targetZ', -50, 50).onChange((v: number) => {
-        controls.target.z = v;
-    });
-    targetFolder.open();
 
     // Renderer folder
     const rendererFolder = gui.addFolder('Renderer');
@@ -818,7 +625,6 @@ function initDevGUI(): void {
     rendererFolder.add(devSettings, 'toneMapping', Object.keys(toneMappingOptions)).name('Tone Mapping').onChange((v: string) => {
         toneMappingEffect.mode = toneMappingOptions[v];
     });
-    rendererFolder.open();
 
     // Lighting folder
     const lightFolder = gui.addFolder('Lighting');
@@ -837,7 +643,6 @@ function initDevGUI(): void {
             light.visible = v;
         });
     });
-    lightFolder.open();
 
     // Environment folder
     const envFolder = gui.addFolder('Environment (HDR)');
@@ -875,7 +680,6 @@ function initDevGUI(): void {
     postFolder.add(devSettings, 'vignetteDarkness', 0, 1).name('Vignette Darkness').onChange((v: number) => {
         vignetteEffect.darkness = v;
     });
-    postFolder.open();
 
     // Model folder
     const modelFolder = gui.addFolder('Model');
@@ -889,34 +693,20 @@ function initDevGUI(): void {
     const actionsFolder = gui.addFolder('Actions');
     actionsFolder.add(devSettings, 'fitToView').name('Fit to View');
     actionsFolder.add(devSettings, 'logCamera').name('Log Camera to Console');
-    actionsFolder.open();
 
     // GLB Cameras folder
     const glbCameraFolder = gui.addFolder('GLB Cameras');
-    glbCameraFolder.open();
 
     // GLB Lights folders
     const pointLightsFolder = gui.addFolder('Point Lights');
-    pointLightsFolder.open();
 
     const spotLightsFolder = gui.addFolder('Spot Lights');
-    spotLightsFolder.open();
 
     window.guiFolders = {
         cameras: glbCameraFolder,
         pointLights: pointLightsFolder,
         spotLights: spotLightsFolder
     };
-
-    controls.addEventListener('change', () => {
-        devSettings.cameraX = camera.position.x;
-        devSettings.cameraY = camera.position.y;
-        devSettings.cameraZ = camera.position.z;
-        devSettings.targetX = controls.target.x;
-        devSettings.targetY = controls.target.y;
-        devSettings.targetZ = controls.target.z;
-        gui.updateDisplay();
-    });
 }
 
 function onWindowResize(): void {
