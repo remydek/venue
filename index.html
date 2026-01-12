@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Diriyah (Saudi Arabia) by Augmento</title>
+    <title>HÏ Ibiza VIP Booking by Augmento</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Unity WebGL Loader -->
-    <script src="WebGL/Build/WebGL.loader.js"></script>
 </head>
 <body>
     <!-- Loading Screen -->
@@ -30,8 +27,42 @@
         </div>
     </div>
 
-    <!-- Unity 3D Canvas -->
-    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <!-- Three.js Canvas Container -->
+    <div id="threejs-container"></div>
+
+    <!-- Court Labels Container -->
+    <div id="court-labels"></div>
+
+    <!-- Debug Mesh List Panel -->
+    <div id="mesh-debug-panel">
+        <div class="mesh-debug-header">
+            <span>GLB Meshes</span>
+            <button id="mesh-debug-toggle">−</button>
+        </div>
+        <div id="mesh-debug-list"></div>
+    </div>
+
+    <!-- Camera View Buttons -->
+    <div id="camera-view-buttons">
+        <button class="camera-view-btn" id="vip-view-btn">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>
+            </svg>
+            <span>VIP View</span>
+        </button>
+        <button class="camera-view-btn" id="top-view-btn">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z" fill="currentColor"/>
+            </svg>
+            <span>Top View</span>
+        </button>
+        <button class="camera-view-btn" id="free-view-btn">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" fill="currentColor"/>
+            </svg>
+            <span>Free View</span>
+        </button>
+    </div>
 
     <!-- UI Overlay -->
     <div id="ui-overlay">
@@ -39,7 +70,7 @@
         <!-- Bottom Info Panel -->
         <div class="bottom-panel">
             <div class="project-info">
-                <h1 class="project-title">Diriyah Media & Innovation District</h1>
+                <h1 class="project-title">HÏ Ibiza VIP Booking</h1>
                 <a href="#" class="register-btn" id="register-btn">
                     REGISTER INTEREST
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -73,15 +104,15 @@
         <div class="info-popup-content">
             <button class="info-popup-close" id="info-popup-close">&times;</button>
             <h2>Information</h2>
-            <p>Welcome to the Diriyah Media & Innovation District - a visionary development that combines cutting-edge architecture with sustainable design principles.</p>
+            <p>Welcome to Padel Edition Dubai - a premier padel tennis facility featuring world-class courts and amenities.</p>
             <p>This state-of-the-art complex features:</p>
             <ul>
-                <li>Modern office spaces with panoramic views</li>
-                <li>Creative studios and innovation labs</li>
-                <li>Rooftop gardens and green spaces</li>
-                <li>Smart building technology throughout</li>
+                <li>Multiple professional padel courts</li>
+                <li>Modern facilities and amenities</li>
+                <li>Premium viewing areas</li>
+                <li>Professional coaching services</li>
             </ul>
-            <p>Click the button below to learn more about investment opportunities.</p>
+            <p>Click the button below to learn more about membership opportunities.</p>
             <button class="info-popup-btn" onclick="document.getElementById('register-modal').classList.add('active'); document.getElementById('info-popup').classList.remove('active');">
                 Register Interest
             </button>
@@ -101,13 +132,13 @@
 
             <div class="glass-header">
                 <div class="glass-title-glow"></div>
-                <h2 class="glass-title">Explore Diriyah</h2>
-                <p class="glass-subtitle">Discover the future of real estate</p>
+                <h2 class="glass-title">Explore Padel Edition</h2>
+                <p class="glass-subtitle">Discover premium padel in Dubai</p>
             </div>
 
             <div class="glass-buttons">
-                <a href="https://diriyah.sa/?utm_source=augmento&utm_medium=3d_viewer&utm_campaign=diriyah_experience" target="_blank" class="glass-action-btn glass-btn-primary">
-                    <span class="glass-btn-text">Visit Diriyah</span>
+                <a href="#" target="_blank" class="glass-action-btn glass-btn-primary">
+                    <span class="glass-btn-text">Learn More</span>
                     <div class="glass-btn-glow"></div>
                     <svg class="glass-btn-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -124,155 +155,6 @@
         </div>
     </div>
 
-    <script>
-        // Console error tracking
-        window.addEventListener('error', function(e) {
-            console.error('Global error:', e.message, e.filename, e.lineno, e.colno);
-        });
-
-        // Unity WebGL initialization
-        var unityInstance = null;
-
-        // Initialize Unity
-        function initUnity() {
-            const canvas = document.querySelector("#unity-canvas");
-            const loadingScreen = document.getElementById('loading-screen');
-            const logoFillWrapper = document.getElementById('logo-fill-wrapper');
-            const progressText = document.getElementById('progress-text');
-
-            // Detect Safari browser
-            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-            // Use WebGL_Safari for Safari, WebGL (Brotli) for other browsers
-            const buildPath = isSafari ? "WebGL_Safari" : "WebGL";
-            const fileExtension = isSafari ? "" : ".br";
-
-            createUnityInstance(canvas, {
-                dataUrl: `${buildPath}/Build/WebGL.data${fileExtension}`,
-                frameworkUrl: `${buildPath}/Build/WebGL.framework.js${fileExtension}`,
-                codeUrl: `${buildPath}/Build/WebGL.wasm${fileExtension}`,
-                streamingAssetsUrl: `${buildPath}/StreamingAssets`,
-                companyName: "Augmento",
-                productName: "Augmento Real Estate Demo",
-                productVersion: "1.0.0",
-            }, (progress) => {
-                // Update loading progress - fill logo from left to right
-                const percent = Math.round(progress * 100);
-                if (logoFillWrapper) {
-                    logoFillWrapper.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
-                }
-                if (progressText) progressText.textContent = percent + '%';
-            }).then((instance) => {
-                unityInstance = instance;
-                // Hide loading screen
-                if (loadingScreen) {
-                    loadingScreen.style.opacity = '0';
-                    setTimeout(() => {
-                        loadingScreen.style.display = 'none';
-                    }, 500);
-                }
-            }).catch((message) => {
-                console.error('Unity initialization error:', message);
-                alert('Failed to load 3D viewer: ' + message);
-            });
-        }
-
-        // Start Unity when page loads
-        window.addEventListener('load', initUnity);
-
-        // UI Controls
-        document.addEventListener('DOMContentLoaded', () => {
-            // Menu toggle
-            const menuBtn = document.getElementById('menu-btn');
-            const mobileMenu = document.getElementById('mobile-menu');
-            if (menuBtn && mobileMenu) {
-                menuBtn.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('active');
-                    menuBtn.classList.toggle('active');
-                });
-            }
-
-            // Settings panel toggle
-            const settingsBtn = document.getElementById('settings-btn');
-            const settingsPanel = document.getElementById('settings-panel');
-            if (settingsBtn && settingsPanel) {
-                settingsBtn.addEventListener('click', () => {
-                    settingsPanel.classList.toggle('active');
-                });
-            }
-
-            // Register modal
-            const registerBtn = document.getElementById('register-btn');
-            const registerModal = document.getElementById('register-modal');
-            const modalClose = document.getElementById('modal-close');
-
-            if (registerBtn && registerModal) {
-                registerBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    registerModal.classList.add('active');
-                    // Disable Unity canvas when modal opens
-                    const unityCanvas = document.getElementById('unity-canvas');
-                    if (unityCanvas) {
-                        unityCanvas.style.pointerEvents = 'none';
-                        unityCanvas.tabIndex = -1;
-                    }
-                });
-            }
-
-            if (modalClose && registerModal) {
-                modalClose.addEventListener('click', () => {
-                    registerModal.classList.remove('active');
-                    // Re-enable Unity canvas when modal closes
-                    const unityCanvas = document.getElementById('unity-canvas');
-                    if (unityCanvas) {
-                        unityCanvas.style.pointerEvents = 'auto';
-                    }
-                });
-            }
-
-            // Close modal on outside click
-            if (registerModal) {
-                registerModal.addEventListener('click', (e) => {
-                    if (e.target === registerModal) {
-                        registerModal.classList.remove('active');
-                        // Re-enable Unity canvas
-                        const unityCanvas = document.getElementById('unity-canvas');
-                        if (unityCanvas) {
-                            unityCanvas.style.pointerEvents = 'auto';
-                        }
-                    }
-                });
-            }
-
-            // Info popup close
-            const infoPopupClose = document.getElementById('info-popup-close');
-            const infoPopup = document.getElementById('info-popup');
-            if (infoPopupClose && infoPopup) {
-                infoPopupClose.addEventListener('click', () => {
-                    infoPopup.classList.remove('active');
-                });
-            }
-
-
-            // Close panels with Escape key
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    if (settingsPanel) settingsPanel.classList.remove('active');
-                    if (registerModal) {
-                        registerModal.classList.remove('active');
-                        // Re-enable Unity canvas
-                        const unityCanvas = document.getElementById('unity-canvas');
-                        if (unityCanvas) {
-                            unityCanvas.style.pointerEvents = 'auto';
-                        }
-                    }
-                    if (mobileMenu) {
-                        mobileMenu.classList.remove('active');
-                        menuBtn.classList.remove('active');
-                    }
-                }
-            });
-        });
-    </script>
+    <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

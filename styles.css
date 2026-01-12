@@ -110,8 +110,8 @@ html, body {
     }
 }
 
-/* Unity Canvas */
-#unity-canvas {
+/* Three.js Canvas Container */
+#threejs-container {
     position: fixed;
     top: 0;
     left: 0;
@@ -121,6 +121,161 @@ html, body {
     display: block;
     touch-action: none;
     background: #231F20;
+}
+
+#threejs-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+/* Court Labels */
+#court-labels {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.court-label {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    pointer-events: auto;
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.3s ease;
+}
+
+.court-label-text {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(0, 180, 216, 0.9), rgba(0, 150, 180, 0.9));
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    box-shadow:
+        0 4px 15px rgba(0, 180, 216, 0.4),
+        0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.court-label::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid rgba(0, 150, 180, 0.9);
+}
+
+.court-label:hover {
+    transform: translate(-50%, -100%) scale(1.05);
+}
+
+.court-label:hover .court-label-text {
+    background: linear-gradient(135deg, rgba(0, 200, 240, 0.95), rgba(0, 180, 216, 0.95));
+    box-shadow:
+        0 6px 20px rgba(0, 180, 216, 0.5),
+        0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* VIP Table Tooltip Styles - Premium Nightclub Look */
+.vip-label {
+    transform: translate(-50%, -100%);
+}
+
+.vip-tooltip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg,
+        rgba(180, 130, 50, 0.95),
+        rgba(140, 90, 30, 0.9));
+    border-radius: 12px;
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    box-shadow:
+        0 4px 20px rgba(255, 185, 0, 0.3),
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: vip-glow 2s ease-in-out infinite;
+}
+
+@keyframes vip-glow {
+    0%, 100% { box-shadow: 0 4px 20px rgba(255, 185, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+    50% { box-shadow: 0 4px 30px rgba(255, 185, 0, 0.5), 0 8px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+}
+
+.vip-tooltip .vip-icon {
+    font-size: 16px;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.vip-tooltip .court-label-text {
+    display: inline-block;
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    box-shadow: none;
+    border: none;
+    backdrop-filter: none;
+}
+
+.vip-tooltip .vip-status {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #7fff7f;
+    padding: 3px 10px;
+    background: rgba(0, 100, 0, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(127, 255, 127, 0.3);
+}
+
+.vip-label::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid rgba(140, 90, 30, 0.9);
+}
+
+.vip-label:hover .vip-tooltip {
+    background: linear-gradient(135deg,
+        rgba(200, 150, 60, 0.98),
+        rgba(160, 110, 40, 0.95));
+    box-shadow:
+        0 6px 30px rgba(255, 185, 0, 0.5),
+        0 10px 40px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+    transition: all 0.3s ease;
 }
 
 /* UI Overlay */
@@ -1099,4 +1254,276 @@ input:checked + .slider:before {
 .settings-controls strong {
     color: var(--text-light);
     font-weight: 600;
+}
+
+/* Camera View Buttons - Glass Style */
+#camera-view-buttons {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 100;
+}
+
+.camera-view-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.15),
+        rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.camera-view-btn svg {
+    width: 20px;
+    height: 20px;
+    opacity: 0.9;
+}
+
+.camera-view-btn:hover {
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.25),
+        rgba(255, 255, 255, 0.1));
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(255, 215, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.camera-view-btn:active {
+    transform: translateY(0);
+    box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+#vip-view-btn {
+    background: linear-gradient(135deg,
+        rgba(255, 185, 0, 0.3),
+        rgba(255, 150, 0, 0.15));
+    border-color: rgba(255, 215, 0, 0.4);
+}
+
+#vip-view-btn:hover {
+    background: linear-gradient(135deg,
+        rgba(255, 185, 0, 0.5),
+        rgba(255, 150, 0, 0.25));
+    border-color: rgba(255, 215, 0, 0.6);
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(255, 185, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+#vip-view-btn svg {
+    color: #ffd700;
+}
+
+#top-view-btn {
+    background: linear-gradient(135deg,
+        rgba(0, 180, 216, 0.3),
+        rgba(0, 150, 180, 0.15));
+    border-color: rgba(0, 180, 216, 0.4);
+}
+
+#top-view-btn:hover {
+    background: linear-gradient(135deg,
+        rgba(0, 180, 216, 0.5),
+        rgba(0, 150, 180, 0.25));
+    border-color: rgba(0, 180, 216, 0.6);
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(0, 180, 216, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+#top-view-btn svg {
+    color: #00b4d8;
+}
+
+#free-view-btn {
+    background: linear-gradient(135deg,
+        rgba(156, 39, 176, 0.3),
+        rgba(123, 31, 162, 0.15));
+    border-color: rgba(156, 39, 176, 0.4);
+}
+
+#free-view-btn:hover {
+    background: linear-gradient(135deg,
+        rgba(156, 39, 176, 0.5),
+        rgba(123, 31, 162, 0.25));
+    border-color: rgba(156, 39, 176, 0.6);
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(156, 39, 176, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+#free-view-btn svg {
+    color: #ce93d8;
+}
+
+/* dat.GUI Styles */
+.dg.ac {
+    z-index: 9999 !important;
+}
+
+.dg.main {
+    margin-top: 10px;
+}
+
+/* Debug Mesh List Panel */
+#mesh-debug-panel {
+    position: fixed;
+    top: 60px;
+    left: 10px;
+    width: 280px;
+    max-height: calc(100vh - 120px);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    z-index: 1000;
+    font-family: 'Inter', monospace;
+    font-size: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+#mesh-debug-panel.collapsed {
+    max-height: 36px;
+}
+
+#mesh-debug-panel.collapsed #mesh-debug-list {
+    display: none;
+}
+
+.mesh-debug-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.mesh-debug-header button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #fff;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mesh-debug-header button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#mesh-debug-list {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.mesh-debug-section {
+    padding: 6px 12px;
+    color: #ffd700;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: rgba(255, 215, 0, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 4px;
+}
+
+.mesh-debug-section:first-child {
+    margin-top: 0;
+    border-top: none;
+}
+
+.mesh-debug-item {
+    padding: 6px 12px 6px 20px;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-left: 3px solid transparent;
+    word-break: break-all;
+}
+
+.mesh-debug-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.mesh-debug-item.mesh-item {
+    border-left-color: #00b4d8;
+}
+
+.mesh-debug-item.mesh-item:hover {
+    background: rgba(0, 180, 216, 0.2);
+}
+
+.mesh-debug-item.light-item {
+    border-left-color: #ffeb3b;
+    cursor: default;
+}
+
+.mesh-debug-item.light-item:hover {
+    background: rgba(255, 235, 59, 0.2);
+}
+
+.mesh-debug-item.empty-item {
+    border-left-color: #ff9800;
+}
+
+.mesh-debug-item.empty-item:hover {
+    background: rgba(255, 152, 0, 0.2);
+}
+
+/* Scrollbar styling for debug panel */
+#mesh-debug-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+#mesh-debug-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+#mesh-debug-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+#mesh-debug-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
 }
