@@ -295,6 +295,7 @@ function initThreeJS(): void {
         envMap = texture;
         scene.environment = envMap;
         scene.environmentIntensity = devSettings.envIntensity;
+        scene.backgroundBlurriness = 0.1;
         if (devSettings.showEnvBackground) {
             scene.background = envMap;
         }
