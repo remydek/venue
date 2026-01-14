@@ -1,19 +1,10 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import {
-    EffectComposer,
-    EffectPass,
-    RenderPass,
-    BloomEffect,
-    VignetteEffect,
-    SMAAEffect,
-    SMAAPreset,
-    ToneMappingEffect,
-    ToneMappingMode
-} from 'postprocessing';
 import * as dat from 'dat.gui';
+import { LightManager } from "./light_manager.ts";
+import { RenderManager } from "./render_manager.ts";
+import {CameraManager} from "./camera_manager.ts";
 
 // Type definitions
 interface DevSettings {
@@ -62,28 +53,14 @@ window.addEventListener('error', (e: ErrorEvent) => {
 
 // Three.js variables
 let scene: THREE.Scene;
-let camera: THREE.PerspectiveCamera;
-let renderer: THREE.WebGLRenderer;
-let controls: OrbitControls;
 let model: THREE.Group;
-let ambientLight: THREE.AmbientLight;
-let glbLights: THREE.Light[] = [];
 let gui: dat.GUI;
 let tennisBalls: THREE.Object3D[] = [];
 let envMap: THREE.Texture;
-let composer: EffectComposer;
-let bloomEffect: BloomEffect;
-let vignetteEffect: VignetteEffect;
-let smaaEffect: SMAAEffect;
-let toneMappingEffect: ToneMappingEffect;
 
-// Cameras and lights from GLB
-let glbCameras: THREE.Camera[] = [];
-let glbPointLights: THREE.PointLight[] = [];
-let glbSpotLights: THREE.SpotLight[] = [];
-
-// Track if camera controls are locked (for Top View)
-let cameraLocked = false;
+let lightManager: LightManager;
+let renderManager : RenderManager;
+let cameraManager: CameraManager;
 
 // Dev controls settings
 const devSettings: DevSettings = {
@@ -108,11 +85,8 @@ const devSettings: DevSettings = {
     topViewZoom: 1.5,
     topViewMinZoom: 20,
     topViewMaxZoom: 150,
-    fitToView: () => fitCameraToModel(),
-    logCamera: () => {
-        console.log('Camera Position:', camera.position);
-        console.log('Controls Target:', controls.target);
-    }
+    fitToView: () => cameraManager.fitToModel(model),
+    logCamera: () => cameraManager.logCameraState()
 };
 
 // Initialize Three.js
@@ -131,131 +105,48 @@ function initThreeJS(): void {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x191919);
 
-    // Create camera - extended far plane to prevent clipping
-    camera = new THREE.PerspectiveCamera(
-        45,
-        window.innerWidth / window.innerHeight,
-        0.01,
-        5000
-    );
-    camera.position.set(50, 30, 50);
+    cameraManager = new CameraManager();
+    renderManager = new RenderManager(container, scene, cameraManager.camera);
+    lightManager = new LightManager(scene);
+    lightManager.setupBaseLighting();
+    cameraManager.initOrbitControls(renderManager.domElement);
 
-    // Create renderer - PREMIUM QUALITY SETTINGS
-    renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        powerPreference: 'high-performance',
-        alpha: false,
-        stencil: false
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    // High quality shadow settings
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.VSMShadowMap;
-    renderer.shadowMap.autoUpdate = true;
-
-    // Color and tone mapping
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.LinearToneMapping;
-    renderer.toneMappingExposure = Math.pow(2, devSettings.exposure);
-
-    container.appendChild(renderer.domElement);
-
-    // Setup pmndrs post-processing
-    composer = new EffectComposer(renderer, {
-        frameBufferType: THREE.HalfFloatType,
-        multisampling: 4
-    });
-
-    const renderPass = new RenderPass(scene, camera);
-    composer.addPass(renderPass);
-
-    // Bloom Effect
-    bloomEffect = new BloomEffect({
-        intensity: devSettings.bloomIntensity,
-        luminanceThreshold: devSettings.bloomLuminanceThreshold,
-        luminanceSmoothing: devSettings.bloomLuminanceSmoothing,
-        radius: devSettings.bloomRadius,
-        mipmapBlur: true
-    });
-
-    // Vignette Effect
-    vignetteEffect = new VignetteEffect({
-        offset: devSettings.vignetteOffset,
-        darkness: devSettings.vignetteDarkness
-    });
-
-    // SMAA Effect
-    smaaEffect = new SMAAEffect({
-        preset: SMAAPreset.ULTRA
-    });
-
-    // Tone Mapping Effect
-    toneMappingEffect = new ToneMappingEffect({
-        mode: ToneMappingMode.LINEAR
-    });
-
-    // Add effects pass
-    const effectPass = new EffectPass(
-        camera,
-        bloomEffect,
-        vignetteEffect,
-        smaaEffect,
-        toneMappingEffect
-    );
-    composer.addPass(effectPass);
-
-    // Create orbit controls
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.enablePan = true;
-    controls.enableZoom = true;
-    controls.minDistance = 5;
-    controls.maxDistance = 200;
-    controls.maxPolarAngle = Math.PI / 2 - 0.05;
-
-    // Raycaster for click-to-position
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
     // Double-click to get 3D position
-    renderer.domElement.addEventListener('dblclick', (event: MouseEvent) => {
+    renderManager.domElement.addEventListener('dblclick', (event: MouseEvent) => {
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        raycaster.setFromCamera(mouse, camera);
+        raycaster.setFromCamera(mouse, cameraManager.camera);
         const intersects = raycaster.intersectObjects(scene.children, true);
 
         if (intersects.length > 0) {
             const point = intersects[0].point;
+            let root = findTableRoot(intersects[0].object);
+            if (root) {
+                const center = new THREE.Vector3();
+                new THREE.Box3().setFromObject(root).getCenter(center);
+                cameraManager.flyToPoint(center);
+            }
+            console.log(root);
             console.log('=== CLICKED POSITION ===');
             console.log(`X: ${point.x.toFixed(2)}, Y: ${point.y.toFixed(2)}, Z: ${point.z.toFixed(2)}`);
         }
     });
 
-    // Lighting setup
-    ambientLight = new THREE.AmbientLight(
-        new THREE.Color(devSettings.ambientColor),
-        devSettings.ambientIntensity
-    );
-    scene.add(ambientLight);
+    function findTableRoot(obj: THREE.Object3D): THREE.Object3D | null {
+        let current: THREE.Object3D | null = obj;
 
-    // Directional light
-    const directionalLight = new THREE.DirectionalLight(
-        new THREE.Color(devSettings.directColor),
-        devSettings.directIntensity
-    );
-    directionalLight.position.set(5, 10, 7.5);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 4096;
-    directionalLight.shadow.mapSize.height = 4096;
-    directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 500;
-    directionalLight.shadow.bias = -0.0001;
-    directionalLight.shadow.normalBias = 0.02;
-    scene.add(directionalLight);
+        while (current) {
+            if (current.name.startsWith("VIP_")) {
+                return current;
+            }
+            current = current.parent;
+        }
+        return null;
+    }
 
     // Load environment map (PNG skydome)
     const textureLoader = new THREE.TextureLoader();
@@ -293,6 +184,8 @@ function initThreeJS(): void {
             model.position.y = -box.min.y;
             model.position.z = -center.z;
 
+            lightManager.processGLBLights(model);
+
             // Enable shadows and find lights from GLB
             model.traverse((child: THREE.Object3D) => {
                 if ((child as THREE.Mesh).isMesh) {
@@ -308,62 +201,14 @@ function initThreeJS(): void {
                     }
                 }
 
-                if ((child as THREE.Light).isLight) {
-                    const light = child as THREE.Light;
-                    console.log('Found light in GLB:', light.type, 'name:', light.name, 'intensity:', light.intensity);
-                    glbLights.push(light);
-                    light.castShadow = true;
-
-                    if (light.shadow) {
-                        light.shadow.mapSize.width = 4096;
-                        light.shadow.mapSize.height = 4096;
-                        light.shadow.bias = -0.0001;
-                        light.shadow.normalBias = 0.02;
-                        light.shadow.radius = 2;
-                    }
-
-                    if ((light as THREE.PointLight).isPointLight) {
-                        const pointLight = light as THREE.PointLight;
-                        glbPointLights.push(pointLight);
-                        pointLight.shadow.camera.near = 0.5;
-                        pointLight.shadow.camera.far = 500;
-                        pointLight.decay = 2;
-                        pointLight.distance = 0;
-                    }
-
-                    if ((light as THREE.SpotLight).isSpotLight) {
-                        const spotLight = light as THREE.SpotLight;
-                        glbSpotLights.push(spotLight);
-                        spotLight.shadow.camera.near = 0.5;
-                        spotLight.shadow.camera.far = 500;
-                        (spotLight.shadow.camera as THREE.PerspectiveCamera).fov = 50;
-                        spotLight.penumbra = 0.5;
-                        spotLight.decay = 2;
-                    }
-
-                    if ((light as THREE.DirectionalLight).isDirectionalLight) {
-                        const dirLight = light as THREE.DirectionalLight;
-                        dirLight.shadow.camera.near = 0.5;
-                        dirLight.shadow.camera.far = 500;
-                        dirLight.shadow.camera.left = -50;
-                        dirLight.shadow.camera.right = 50;
-                        dirLight.shadow.camera.top = 50;
-                        dirLight.shadow.camera.bottom = -50;
-                    }
-                }
-
                 if ((child as THREE.Camera).isCamera) {
-                    console.log('Found camera in GLB:', child.name, child.type);
-                    glbCameras.push(child as THREE.Camera);
+                    cameraManager.addGLBCamera(child as THREE.Camera);
                 }
             });
 
             // Scale up the model
             model.scale.set(2.5, 2.5, 2.5);
             scene.add(model);
-
-            // Apply specific light settings
-            applyLightSettings();
 
             // Recalculate size after scaling
             const scaledBox = new THREE.Box3().setFromObject(model);
@@ -373,16 +218,19 @@ function initThreeJS(): void {
             console.log('Scaled model size:', scaledSize);
             console.log('Model center:', center);
 
-            fitCameraToModel();
+            cameraManager.fitToModel(model);
             populateGLBControls();
 
-            // Start with camera_b view
-            const startCamera = glbCameras.find(cam => cam.name.toLowerCase() === 'camera_b');
-            if (startCamera) {
-                setTimeout(() => {
-                    flyToCamera(startCamera, false);
-                }, 100);
-            }
+            // const startCamera = cameraManager.findCameraByName('camera_b')
+            // if (startCamera) {
+            //     setTimeout(() => {
+            //         cameraManager.flyToCamera(startCamera);
+            //     }, 100);
+            // }
+
+            setTimeout(() => {
+                cameraManager.flyToPoint(center, 1);
+            }, 100);
 
             // Hide loading screen
             if (loadingScreen) {
@@ -414,13 +262,13 @@ function initThreeJS(): void {
 function populateGLBControls(): void {
     if (!window.guiFolders) return;
 
-    glbCameras.forEach((glbCam, index) => {
+    cameraManager.glbCameras.forEach((glbCam, index) => {
         const camName = glbCam.name || `Camera ${index + 1}`;
-        const flyToFunc = () => flyToCamera(glbCam);
+        const flyToFunc = () => cameraManager.flyToCamera(glbCam);
         window.guiFolders.cameras.add({ [camName]: flyToFunc }, camName).name(`Fly to: ${camName}`);
     });
 
-    glbPointLights.forEach((light, index) => {
+    lightManager.glbPointLights.forEach((light, index) => {
         const lightName = light.name || `Point Light ${index + 1}`;
         const folder = window.guiFolders.pointLights.addFolder(lightName);
 
@@ -449,7 +297,7 @@ function populateGLBControls(): void {
         });
     });
 
-    glbSpotLights.forEach((light, index) => {
+    lightManager.glbSpotLights.forEach((light, index) => {
         const lightName = light.name || `Spot Light ${index + 1}`;
         const folder = window.guiFolders.spotLights.addFolder(lightName);
 
@@ -486,152 +334,7 @@ function populateGLBControls(): void {
         });
     });
 
-    console.log(`Added ${glbCameras.length} camera buttons, ${glbPointLights.length} point lights, ${glbSpotLights.length} spot lights to GUI`);
-}
-
-// Fly camera to a GLB camera position with smooth animation
-function flyToCamera(targetCam: THREE.Camera, locked = false): void {
-    const targetPos = new THREE.Vector3();
-    targetCam.getWorldPosition(targetPos);
-
-    const targetDir = new THREE.Vector3(0, 0, -1);
-    targetDir.applyQuaternion(targetCam.quaternion);
-
-    const lookAtPoint = targetPos.clone().add(targetDir.multiplyScalar(10));
-
-    // For camera_top, apply zoom multiplier from settings
-    if (targetCam.name.toLowerCase() === 'camera_top' && devSettings.topViewZoom !== 1.0) {
-        const zoomMultiplier = devSettings.topViewZoom;
-        // Move camera closer (zoom > 1) or farther (zoom < 1) along the view direction
-        const direction = lookAtPoint.clone().sub(targetPos).normalize();
-        const currentDistance = targetPos.distanceTo(lookAtPoint);
-        const newDistance = currentDistance / zoomMultiplier;
-        targetPos.copy(lookAtPoint).sub(direction.multiplyScalar(newDistance));
-        console.log(`Top View zoom applied: ${zoomMultiplier}x (distance: ${currentDistance.toFixed(2)} -> ${newDistance.toFixed(2)})`);
-    }
-
-    const startPos = camera.position.clone();
-    const startTarget = controls.target.clone();
-    const duration = 1500;
-    const startTime = performance.now();
-
-    cameraLocked = locked;
-
-    // Store original limits and temporarily remove them during animation
-    const origMinDist = controls.minDistance;
-    const origMaxDist = controls.maxDistance;
-    controls.minDistance = 0;
-    controls.maxDistance = Infinity;
-
-    function animateFly(currentTime: number): void {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-
-        const eased = progress < 0.5
-            ? 2 * progress * progress
-            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-        camera.position.lerpVectors(startPos, targetPos, eased);
-        controls.target.lerpVectors(startTarget, lookAtPoint, eased);
-        controls.update();
-
-        if (progress < 1) {
-            requestAnimationFrame(animateFly);
-        } else {
-            // Keep limits open for camera views (don't restore restrictive limits)
-            controls.minDistance = 0.1;
-            controls.maxDistance = 500;
-
-            if (locked) {
-                controls.enableRotate = false;
-                controls.enablePan = false;
-                controls.enableZoom = true;
-                console.log('Camera controls locked (Top View mode)');
-            }
-        }
-    }
-
-    requestAnimationFrame(animateFly);
-    console.log(`Flying to camera: ${targetCam.name}`, targetPos, locked ? '(locked)' : '(free)');
-}
-
-// Unlock camera controls
-function unlockCamera(): void {
-    cameraLocked = false;
-    controls.enableRotate = true;
-    controls.enablePan = true;
-    controls.enableZoom = true;
-    console.log('Camera controls unlocked');
-}
-
-// Apply specific light settings from user configuration
-function applyLightSettings(): void {
-    glbPointLights.forEach(light => {
-        const name = light.name.toLowerCase();
-
-        if (name.includes('purple')) {
-            light.visible = true;
-            light.intensity = 39;
-            light.color.set('#4700ff');
-            light.distance = 100;
-            light.decay = 0;
-            console.log('Applied purplelight settings:', light.name);
-        } else if (name.includes('pink')) {
-            light.visible = true;
-            light.intensity = 7;
-            light.color.set('#d400ff');
-            light.distance = 0;
-            light.decay = 0;
-            console.log('Applied pinklight settings:', light.name);
-        }
-    });
-
-    glbSpotLights.forEach(light => {
-        const name = light.name.toLowerCase();
-
-        if (name.includes('spot')) {
-            light.visible = true;
-            light.intensity = 24;
-            light.color.set('#ffc4af');
-            light.distance = 0;
-            light.angle = THREE.MathUtils.degToRad(10);
-            light.penumbra = 1;
-            light.decay = 1.4;
-            console.log('Applied spotlight settings:', light.name);
-        }
-    });
-
-    console.log('Light settings applied');
-}
-
-// Fit camera to model
-function fitCameraToModel(): void {
-    if (!model) return;
-
-    const box = new THREE.Box3().setFromObject(model);
-    const size = box.getSize(new THREE.Vector3());
-
-    const modelWidth = size.x;
-    const modelHeight = size.y;
-
-    const fovRad = camera.fov * (Math.PI / 180);
-    const aspect = window.innerWidth / window.innerHeight;
-    const hFov = 2 * Math.atan(Math.tan(fovRad / 2) * aspect);
-    const distanceToFitWidth = (modelWidth / 2) / Math.tan(hFov / 2);
-    const finalDistance = distanceToFitWidth * 0.85;
-
-    camera.position.set(
-        finalDistance * 0.7,
-        finalDistance * 0.5,
-        finalDistance * 0.7
-    );
-
-    controls.target.set(0, modelHeight * 0.3, 0);
-    controls.update();
-
-    console.log('Model size:', size);
-    console.log('Final distance:', finalDistance);
-    console.log('Camera position:', camera.position);
+    console.log(`Added ${cameraManager.glbCameras.length} camera buttons, ${lightManager.glbPointLights.length} point lights, ${lightManager.glbSpotLights.length} spot lights to GUI`);
 }
 
 // Initialize dev GUI
@@ -642,39 +345,25 @@ function initDevGUI(): void {
     // Renderer folder
     const rendererFolder = gui.addFolder('Renderer');
     rendererFolder.add(devSettings, 'exposure', -5, 5).name('Exposure (EV)').onChange((v: number) => {
-        renderer.toneMappingExposure = Math.pow(2, v);
+        renderManager.renderer.toneMappingExposure = Math.pow(2, v);
     });
 
-    // Tone mapping options (postprocessing library modes)
-    const toneMappingOptions: { [key: string]: ToneMappingMode } = {
-        'Linear': ToneMappingMode.LINEAR,
-        'Reinhard': ToneMappingMode.REINHARD,
-        'Reinhard2': ToneMappingMode.REINHARD2,
-        'Reinhard2 Adaptive': ToneMappingMode.REINHARD2_ADAPTIVE,
-        'Uncharted2': ToneMappingMode.UNCHARTED2,
-        'Optimized Cineon': ToneMappingMode.OPTIMIZED_CINEON,
-        'ACES Filmic': ToneMappingMode.ACES_FILMIC,
-        'AGX': ToneMappingMode.AGX,
-        'Neutral': ToneMappingMode.NEUTRAL
-    };
-    rendererFolder.add(devSettings, 'toneMapping', Object.keys(toneMappingOptions)).name('Tone Mapping').onChange((v: string) => {
-        toneMappingEffect.mode = toneMappingOptions[v];
-    });
+    devSettings.toneMapping = renderManager.getToneMappingName();
+    rendererFolder.add(devSettings, 'toneMapping', renderManager.getToneMappingModeNames())
+        .name('Tone Mapping')
+        .onChange((v: string) => {
+            renderManager.setToneMappingByName(v);
+        });
 
-    // Lighting folder
     const lightFolder = gui.addFolder('Lighting');
     lightFolder.add(devSettings, 'ambientIntensity', 0, 2).name('Ambient Intensity').onChange((v: number) => {
-        if (ambientLight) ambientLight.intensity = v;
+        lightManager.updateAmbientLight(v);
     });
     lightFolder.add(devSettings, 'directIntensity', 0, 5).name('Direct Intensity').onChange((v: number) => {
-        scene.traverse((child: THREE.Object3D) => {
-            if ((child as THREE.DirectionalLight).isDirectionalLight && child !== ambientLight) {
-                (child as THREE.DirectionalLight).intensity = v;
-            }
-        });
+        lightManager.updateDirectionalLight(v);
     });
     lightFolder.add(devSettings, 'punctualLights').name('Punctual Lights').onChange((v: boolean) => {
-        glbLights.forEach(light => {
+        lightManager.glbLights.forEach(light => {
             light.visible = v;
         });
     });
@@ -694,26 +383,26 @@ function initDevGUI(): void {
     const postFolder = gui.addFolder('Post-Processing');
 
     postFolder.add(devSettings, 'bloomEnabled').name('Bloom').onChange((v: boolean) => {
-        bloomEffect.blendMode.opacity.value = v ? 1 : 0;
+        renderManager.bloomEffect.blendMode.opacity.value = v ? 1 : 0;
     });
     postFolder.add(devSettings, 'bloomIntensity', 0, 3).name('Bloom Intensity').onChange((v: number) => {
-        bloomEffect.intensity = v;
+        renderManager.bloomEffect.intensity = v;
     });
     postFolder.add(devSettings, 'bloomLuminanceThreshold', 0, 1).name('Bloom Threshold').onChange((v: number) => {
-        bloomEffect.luminanceMaterial.threshold = v;
+        renderManager.bloomEffect.luminanceMaterial.threshold = v;
     });
     postFolder.add(devSettings, 'bloomRadius', 0, 1).name('Bloom Radius').onChange((v: number) => {
-        bloomEffect.mipmapBlurPass.radius = v;
+        renderManager.bloomEffect.mipmapBlurPass.radius = v;
     });
 
     postFolder.add(devSettings, 'vignetteEnabled').name('Vignette').onChange((v: boolean) => {
-        vignetteEffect.blendMode.opacity.value = v ? 1 : 0;
+        renderManager.vignetteEffect.blendMode.opacity.value = v ? 1 : 0;
     });
     postFolder.add(devSettings, 'vignetteOffset', 0, 1).name('Vignette Offset').onChange((v: number) => {
-        vignetteEffect.offset = v;
+        renderManager.vignetteEffect.offset = v;
     });
     postFolder.add(devSettings, 'vignetteDarkness', 0, 1).name('Vignette Darkness').onChange((v: number) => {
-        vignetteEffect.darkness = v;
+        renderManager.vignetteEffect.darkness = v;
     });
 
     // Model folder
@@ -753,16 +442,14 @@ function initDevGUI(): void {
 function onWindowResize(): void {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-    renderer.setSize(width, height);
-    composer.setSize(width, height);
+    cameraManager.onResize(width, height);
+    renderManager.setSize(width, height);
 }
 
 function animate(time: number): void {
     requestAnimationFrame(animate);
-    controls.update();
-    composer.render();
+    cameraManager.update();
+    renderManager.render();
 }
 
 // Start Three.js when page loads
@@ -880,24 +567,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const topViewBtn = document.getElementById('top-view-btn');
     const freeViewBtn = document.getElementById('free-view-btn');
 
-    // Helper function to find camera by name
-    const findCameraByName = (name: string): THREE.Camera | undefined => {
-        console.log('Looking for camera:', name);
-        console.log('Available cameras:', glbCameras.map(c => c.name));
-        const found = glbCameras.find(cam => cam.name.toLowerCase() === name.toLowerCase());
-        console.log('Found:', found ? found.name : 'NOT FOUND');
-        return found;
-    };
-
     if (tableBBtn) {
         tableBBtn.addEventListener('click', () => {
             console.log('Table B button clicked');
-            unlockCamera();
-            const cam = findCameraByName('camera_b');
+            cameraManager.unlockControls();
+            const cam = cameraManager.findCameraByName('camera_b');
             if (cam) {
-                flyToCamera(cam, false);
-            } else {
-                console.warn('Camera "camera_b" not found in GLB. Available:', glbCameras.map(c => c.name));
+                cameraManager.flyToCamera(cam, false);
             }
         });
     }
@@ -905,12 +581,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tableB1Btn) {
         tableB1Btn.addEventListener('click', () => {
             console.log('Table B1 button clicked');
-            unlockCamera();
-            const cam = findCameraByName('camera_b1');
+            cameraManager.unlockControls();
+            const cam = cameraManager.findCameraByName('camera_b1');
             if (cam) {
-                flyToCamera(cam, false);
-            } else {
-                console.warn('Camera "camera_b1" not found in GLB. Available:', glbCameras.map(c => c.name));
+                cameraManager.flyToCamera(cam, false);
             }
         });
     }
@@ -918,19 +592,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (topViewBtn) {
         topViewBtn.addEventListener('click', () => {
             console.log('Top View button clicked');
-            const cam = findCameraByName('camera_top');
+            const cam = cameraManager.findCameraByName('camera_top');
             if (cam) {
-                flyToCamera(cam, true);
-            } else {
-                console.warn('Camera "camera_top" not found in GLB. Available:', glbCameras.map(c => c.name));
+                cameraManager.flyToCamera(cam, true);
             }
         });
     }
 
     if (freeViewBtn) {
         freeViewBtn.addEventListener('click', () => {
-            unlockCamera();
-            fitCameraToModel();
+            cameraManager.unlockControls();
+            cameraManager.fitToModel(model);
         });
     }
 
