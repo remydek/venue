@@ -89,6 +89,7 @@ export class RenderManager {
 
         this.toneMappingEffect = new ToneMappingEffect({
             mode: ToneMappingMode.ACES_FILMIC
+        });
 
         this.outlineEffect = new OutlineEffect(this.scene, this.camera, {
             blendFunction: BlendFunction.SCREEN,
