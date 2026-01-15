@@ -8,7 +8,8 @@ import {
     SMAAEffect,
     SMAAPreset,
     ToneMappingEffect,
-    ToneMappingMode
+    ToneMappingMode,
+    OutlineEffect, BlendFunction
 } from 'postprocessing';
 
 export const TONE_MAPPING_MODES: { [key: string]: ToneMappingMode } = {
@@ -30,6 +31,7 @@ export class RenderManager {
     public vignetteEffect: VignetteEffect;
     public smaaEffect: SMAAEffect;
     public toneMappingEffect: ToneMappingEffect;
+    public outlineEffect: OutlineEffect;
 
     constructor(
         container: HTMLElement,
@@ -87,11 +89,22 @@ export class RenderManager {
 
         this.toneMappingEffect = new ToneMappingEffect({
             mode: ToneMappingMode.ACES_FILMIC
+
+        this.outlineEffect = new OutlineEffect(this.scene, this.camera, {
+            blendFunction: BlendFunction.SCREEN,
+            edgeStrength: 2.5,
+            pulseSpeed: 0.3,
+            visibleEdgeColor: 0xffffff,
+            hiddenEdgeColor: 0x22090a,
+            height: 480,
+            blur: false,
+            xRay: true
         });
 
         // Add effects pass
         const effectPass = new EffectPass(
             this.camera,
+            this.outlineEffect,
             this.bloomEffect,
             this.vignetteEffect,
             this.smaaEffect,
@@ -137,9 +150,27 @@ export class RenderManager {
         return this.renderer.domElement;
     }
 
-    /**
-     * Dispose of all effects and composer
-     */
+    public selectOutlineObjects(objects: THREE.Object3D[]): void {
+        this.outlineEffect.selection.set(objects);
+        this.outlineEffect.blendMode.opacity.value = 1
+    }
+
+    public setOutlineEnabled(enabled: boolean): void {
+        this.outlineEffect.blendMode.opacity.value = enabled ? 1 : 0;
+    }
+
+    public setOutlineColor(color: number): void {
+        this.outlineEffect.visibleEdgeColor.set(color);
+    }
+
+    public setOutlineStrength(strength: number): void {
+        this.outlineEffect.edgeStrength = strength;
+    }
+
+    public setOutlinePulse(speed: number): void {
+        this.outlineEffect.pulseSpeed = speed;
+    }
+
     public dispose(): void {
         this.composer.dispose();
         console.log('Post-processing disposed');

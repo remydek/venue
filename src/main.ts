@@ -62,6 +62,8 @@ let lightManager: LightManager;
 let renderManager : RenderManager;
 let cameraManager: CameraManager;
 
+let tableSelectors: THREE.Object3D[] = [];
+
 // Dev controls settings
 const devSettings: DevSettings = {
     exposure: -2,
@@ -132,7 +134,10 @@ function initThreeJS(): void {
 
                 tablePosition.copy(center);
                 tablePosition.y += 0.017;
+
+                renderManager.selectOutlineObjects(tableSelectors);
             }
+
             console.log(root);
             console.log('=== CLICKED POSITION ===');
             console.log(`X: ${point.x.toFixed(2)}, Y: ${point.y.toFixed(2)}, Z: ${point.z.toFixed(2)}`);
@@ -174,7 +179,8 @@ function initThreeJS(): void {
     loader.setDRACOLoader(dracoLoader);
 
     loader.load(
-        'final-model.glb?v=' + Date.now(),
+        // 'final-model.glb?v=' + Date.now(),
+        'HI-IBIZA.glb',
         (gltf) => {
             model = gltf.scene;
 
@@ -207,6 +213,12 @@ function initThreeJS(): void {
                 if ((child as THREE.Camera).isCamera) {
                     cameraManager.addGLBCamera(child as THREE.Camera);
                 }
+
+                if (child.name.startsWith("table_selector_") && tableSelectors.length == 0) {
+                    console.log("Table selector added", child);
+                    tableSelectors.push(child);
+                    tableSelectors.push(...child.children);
+                }
             });
 
             // Scale up the model
@@ -223,6 +235,26 @@ function initThreeJS(): void {
 
             cameraManager.fitToModel(model);
             populateGLBControls();
+
+            tableSelectors.forEach(obj => {
+                if ((obj as THREE.Mesh).isMesh) {
+                    const mesh = obj as THREE.Mesh;
+
+                    const material = mesh.material;
+
+                    // Handle multi-material meshes
+                    const materials = Array.isArray(material) ? material : [material];
+
+                    materials.forEach(mat => {
+                        mat.side = THREE.DoubleSide;
+                        // mat.depthTest = false;   // outline always visible
+                        // mat.depthWrite = false;
+                        mat.needsUpdate = true;
+                    });
+                }
+            });
+
+            renderManager.selectOutlineObjects(tableSelectors);
 
             // const startCamera = cameraManager.findCameraByName('camera_b')
             // if (startCamera) {
@@ -434,6 +466,30 @@ function initDevGUI(): void {
     });
     postFolder.add(devSettings, 'vignetteDarkness', 0, 1).name('Vignette Darkness').onChange((v: number) => {
         renderManager.vignetteEffect.darkness = v;
+    });
+
+    const outlineFolder = gui.addFolder('Outline Effect');
+
+    outlineFolder.add({ enabled: true }, 'enabled').onChange((v) => {
+        renderManager.setOutlineEnabled(v);
+    });
+
+    outlineFolder.add({ strength: 2.5 }, 'strength', 0, 10).onChange((v) => {
+        renderManager.setOutlineStrength(v);
+    });
+
+    outlineFolder.add({ blurriness: 2.5 }, 'blurriness', 0, 10).onChange((v) => {
+        renderManager.outlineEffect.blur = true;
+        renderManager.outlineEffect.blurPass.scale = v;
+    })
+
+    outlineFolder.addColor({ color: 0xffffff }, 'color').onChange((v) => {
+        renderManager.setOutlineColor(v);
+    });
+
+    outlineFolder.add({ pulse: 0 }, 'pulse', 0, 3).onChange((v) => {
+        renderManager.setOutlinePulse(v);
+
     });
 
     // Model folder
