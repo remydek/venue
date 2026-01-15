@@ -8,7 +8,62 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        #popup {
+            /* 1. LAYER & POSITIONING */
+            position: absolute;
+            top: 0;   /* Crucial: Start at 0 so JS transform math is correct */
+            left: 0;  /* Crucial: Start at 0 so JS transform math is correct */
+            z-index: 1000;
+            display: none;
+            pointer-events: auto;
+
+            /* 2. PERFORMANCE (FIXES THE SHAKING) */
+            will-change: transform; /* Prepares the GPU for smooth movement */
+
+            /* 3. VISUALS (GLASSMORPHISM) */
+            background: rgba(20, 20, 20, 0.6); /* Slightly darker for better contrast */
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            width: 250px;
+            font-family: sans-serif;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+
+            /* We remove the 'transform' from here because JS will control it now */
+        }
+
+        /* The Triangle on the bottom */
+        #popup::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid rgba(255, 255, 255, 0.1); /* Match background */
+            backdrop-filter: blur(15px); /* Optional: helps triangle blend */
+        }
+
+        .reserve-btn {
+            background: #0099ff;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            color: white;
+            width: 100%;
+            margin-top: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
 </head>
+
 <body>
     <!-- Loading Screen -->
     <div id="loading-screen">
@@ -27,8 +82,34 @@
         </div>
     </div>
 
+    <div id="app-viewport" style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
+
+        <!-- This is where your canvas lives -->
+        <div id="threejs-container" style="width: 100%; height: 100%;"></div>
+
+        <!-- This sits ON TOP of the container -->
+        <div id="popup">
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <strong>Balcony Main</strong>
+                <span style="border: 1px solid white; border-radius: 50%; padding: 2px 6px; font-size: 10px;">B1</span>
+            </div>
+            <h2 style="margin: 10px 0;">€7.500 <small style="font-size: 12px; font-weight: normal;">min spent.</small></h2>
+            <button class="reserve-btn">Reserve Table →</button>
+        </div>
+
+    </div>
+
     <!-- Three.js Canvas Container -->
-    <div id="threejs-container"></div>
+<!--    <div id="threejs-container"></div>-->
+
+<!--    <div id="popup">-->
+<!--        <div style="display:flex; justify-content: space-between;">-->
+<!--            <strong>Balcony Main</strong>-->
+<!--            <span style="border: 1px solid white; border-radius: 50%; padding: 2px 6px; font-size: 10px;">B1</span>-->
+<!--        </div>-->
+<!--        <h2 style="margin: 10px 0;">€7.500 <small style="font-size: 12px; font-weight: normal;">min spent.</small></h2>-->
+<!--        <button class="reserve-btn">Reserve Table →</button>-->
+<!--    </div>-->
 
     <!-- Court Labels Container -->
     <div id="court-labels"></div>

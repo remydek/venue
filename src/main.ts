@@ -129,6 +129,9 @@ function initThreeJS(): void {
                 const center = new THREE.Vector3();
                 new THREE.Box3().setFromObject(root).getCenter(center);
                 cameraManager.flyToPoint(center);
+
+                tablePosition.copy(center);
+                tablePosition.y += 0.017;
             }
             console.log(root);
             console.log('=== CLICKED POSITION ===');
@@ -256,6 +259,34 @@ function initThreeJS(): void {
     window.addEventListener('resize', onWindowResize);
     initDevGUI();
     animate(0);
+}
+
+const tablePosition = new THREE.Vector3(0, 1.5, 0);
+const popup = document.querySelector('#popup') as HTMLElement;
+
+function updatePopup() {
+    const popup = document.getElementById('popup');
+    if (!popup) return;
+
+    const vector = tablePosition.clone();
+    vector.project(cameraManager.camera);
+
+    const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+    const y = (vector.y * -0.5 + 0.5) * window.innerHeight;
+
+    // Use translate3d for sub-pixel precision and GPU acceleration.
+    // We include the -50% and -100% here to keep the popup centered and above the point.
+    // popup.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -100%)`;
+    const tiltX = (cameraManager.camera.position.y / 10) * 45;
+
+    popup.style.transform = `
+        translate3d(${x}px, ${y}px, 0) 
+        translate(-50%, -100%) 
+        perspective(1000px) 
+        rotateX(${-tiltX}deg)
+    `;
+    
+    popup.style.display = vector.z > 1 ? 'none' : 'block';
 }
 
 // Populate GLB camera buttons and light controls
@@ -449,6 +480,7 @@ function onWindowResize(): void {
 function animate(time: number): void {
     requestAnimationFrame(animate);
     cameraManager.update();
+    updatePopup();
     renderManager.render();
 }
 
