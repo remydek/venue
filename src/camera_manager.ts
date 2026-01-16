@@ -73,20 +73,20 @@ export class CameraManager {
     public flyToPoint(
         point: THREE.Vector3,
         distance = 0.2,
-        polarAngle = Math.PI / 4,   // vertical angle
-        azimuthAngle = 0           // horizontal angle
+        polarAngle = Math.PI / 4,
+        azimuthAngle = 0
     ): void {
         const startPos = this.camera.position.clone();
         const startTarget = this.controls.target.clone();
 
-        // Build offset from spherical coordinates
-        const offset = new THREE.Vector3().setFromSphericalCoords(
+        const startOffset = startPos.clone().sub(startTarget);
+
+        const startSpherical = new THREE.Spherical().setFromVector3(startOffset);
+        const endSpherical = new THREE.Spherical(
             distance,
             polarAngle,
             azimuthAngle
         );
-
-        const targetPos = point.clone().add(offset);
 
         const duration = 1200;
         const startTime = performance.now();
@@ -97,8 +97,23 @@ export class CameraManager {
                 ? 2 * t * t
                 : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
-            this.camera.position.lerpVectors(startPos, targetPos, eased);
-            this.controls.target.lerpVectors(startTarget, point, eased);
+            let deltaTheta = endSpherical.theta - startSpherical.theta;
+            if (deltaTheta > Math.PI) deltaTheta -= 2 * Math.PI;
+            if (deltaTheta < -Math.PI) deltaTheta += 2 * Math.PI;
+
+            const spherical = new THREE.Spherical(
+                THREE.MathUtils.lerp(startSpherical.radius, endSpherical.radius, eased),
+                THREE.MathUtils.lerp(startSpherical.phi, endSpherical.phi, eased),
+                startSpherical.theta + deltaTheta * eased
+            );
+
+            const currentTarget = new THREE.Vector3().lerpVectors(startTarget, point, eased);
+            const newPos = new THREE.Vector3()
+                .setFromSpherical(spherical)
+                .add(currentTarget);
+
+            this.camera.position.copy(newPos);
+            this.controls.target.copy(currentTarget);
             this.controls.update();
 
             if (t < 1) requestAnimationFrame(animate);
