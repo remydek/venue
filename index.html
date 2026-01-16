@@ -10,58 +10,61 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        #popup {
-            /* 1. LAYER & POSITIONING */
-            position: absolute;
-            top: 0;   /* Crucial: Start at 0 so JS transform math is correct */
-            left: 0;  /* Crucial: Start at 0 so JS transform math is correct */
-            z-index: 1000;
-            display: none;
-            pointer-events: auto;
+        /*#popup {*/
+        /*    !* 1. LAYER & POSITIONING *!*/
+        /*    position: absolute;*/
+        /*    top: 0;   !* Crucial: Start at 0 so JS transform math is correct *!*/
+        /*    left: 0;  !* Crucial: Start at 0 so JS transform math is correct *!*/
+        /*    z-index: 1000;*/
+        /*    display: none;*/
+        /*    pointer-events: auto;*/
 
-            /* 2. PERFORMANCE (FIXES THE SHAKING) */
-            will-change: transform; /* Prepares the GPU for smooth movement */
+        /*    !* 2. PERFORMANCE (FIXES THE SHAKING) *!*/
+        /*    will-change: transform; !* Prepares the GPU for smooth movement *!*/
 
-            /* 3. VISUALS (GLASSMORPHISM) */
-            background: rgba(20, 20, 20, 0.6); /* Slightly darker for better contrast */
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 20px;
-            border-radius: 20px;
-            width: 250px;
-            font-family: sans-serif;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /*    !* 3. VISUALS (GLASSMORPHISM) *!*/
+        /*    background: rgba(20, 20, 20, 0.6); !* Slightly darker for better contrast *!*/
+        /*    backdrop-filter: blur(15px);*/
+        /*    -webkit-backdrop-filter: blur(15px);*/
+        /*    border: 1px solid rgba(255, 255, 255, 0.2);*/
+        /*    color: white;*/
+        /*    padding: 20px;*/
+        /*    border-radius: 20px;*/
+        /*    width: 250px;*/
+        /*    font-family: sans-serif;*/
+        /*    box-shadow: 0 10px 30px rgba(0,0,0,0.5);*/
 
-            /* We remove the 'transform' from here because JS will control it now */
-        }
+        /*    !* We remove the 'transform' from here because JS will control it now *!*/
+        /*}*/
 
-        /* The Triangle on the bottom */
-        #popup::after {
-            content: "";
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 10px solid rgba(255, 255, 255, 0.1); /* Match background */
-            backdrop-filter: blur(15px); /* Optional: helps triangle blend */
-        }
 
-        .reserve-btn {
-            background: #0099ff;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            color: white;
-            width: 100%;
-            margin-top: 15px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-    </style>
+<!--        /* The Triangle on the bottom */-->
+<!--        /*#popup::after {*/-->
+<!--        /*    content: "";*/-->
+<!--        /*    position: absolute;*/-->
+<!--        /*    bottom: -10px;*/-->
+<!--        /*    left: 50%;*/-->
+<!--        /*    transform: translateX(-50%);*/-->
+<!--        /*    border-left: 10px solid transparent;*/-->
+<!--        /*    border-right: 10px solid transparent;*/-->
+<!--        /*    border-top: 10px solid rgba(255, 255, 255, 0.1); !* Match background *!*/-->
+<!--        /*    backdrop-filter: blur(15px); !* Optional: helps triangle blend *!*/-->
+<!--        /*}*/-->
+
+<!--        .reserve-btn {-->
+<!--            background: #0099ff;-->
+<!--            border: none;-->
+<!--            padding: 12px;-->
+<!--            border-radius: 10px;-->
+<!--            color: white;-->
+<!--            width: 100%;-->
+<!--            margin-top: 15px;-->
+<!--            cursor: pointer;-->
+<!--            font-weight: bold;-->
+<!--        }-->
+<!--    </style>-->
+
+    <link rel="stylesheet" href="popup_style.css">
 </head>
 
 <body>
@@ -88,13 +91,103 @@
         <div id="threejs-container" style="width: 100%; height: 100%;"></div>
 
         <!-- This sits ON TOP of the container -->
-        <div id="popup">
-            <div style="display:flex; justify-content: space-between; align-items: center;">
-                <strong>Balcony Main</strong>
-                <span style="border: 1px solid white; border-radius: 50%; padding: 2px 6px; font-size: 10px;">B1</span>
+<!--        <div id="popup">-->
+
+<!--            <div style="display:flex; justify-content: space-between; align-items: center;">-->
+<!--                <strong>Balcony Main</strong>-->
+<!--                <span style="border: 1px solid white; border-radius: 50%; padding: 2px 6px; font-size: 10px;">B1</span>-->
+<!--            </div>-->
+<!--            <h2 style="margin: 10px 0;">€7.500 <small style="font-size: 12px; font-weight: normal;">min spent.</small></h2>-->
+<!--            <button class="reserve-btn" id="reserve-btn">Reserve Table →</button>-->
+<!--        </div>-->
+
+        <div class="popup-wrapper" id = "popup">
+            <div class="popup-container" >
+                <!-- SVG for clip path and border -->
+                <svg class="popup-shape" viewBox="0 0 400 420" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;">
+                    <defs>
+                        <clipPath id="popupClip">
+                            <path d="
+              M 24 0
+              H 376
+              Q 400 0 400 24
+              V 336
+              Q 400 360 376 360
+              H 260
+              Q 230 360 210 380
+              Q 200 390 190 380
+              Q 170 360 140 360
+              H 24
+              Q 0 360 0 336
+              V 24
+              Q 0 0 24 0
+              Z
+            "/>
+                        </clipPath>
+                    </defs>
+                </svg>
+
+                <!-- Glass layers -->
+                <div class="glass-layer glass-base"></div>
+                <div class="glass-layer glass-noise"></div>
+                <div class="glass-layer glass-shine"></div>
+                <div class="glass-layer glass-inner-shadow"></div>
+
+                <!-- Edge highlight -->
+                <div class="edge-highlight">
+                    <svg viewBox="0 0 400 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="
+            M 24 1
+            H 376
+            Q 399 1 399 24
+            V 336
+            Q 399 359 376 359
+            H 260
+            Q 230 359 210 379
+            Q 200 389 190 379
+            Q 170 359 140 359
+            H 24
+            Q 1 359 1 336
+            V 24
+            Q 1 1 24 1
+            Z
+          " stroke="url(#edgeGradient)" stroke-width="1.5" fill="none"/>
+                        <defs>
+                            <linearGradient id="edgeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="rgba(255,255,255,0.3)"/>
+                                <stop offset="30%" stop-color="rgba(255,255,255,0.1)"/>
+                                <stop offset="70%" stop-color="rgba(255,255,255,0.05)"/>
+                                <stop offset="100%" stop-color="rgba(255,255,255,0.15)"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+
+                <!-- Content -->
+                <div class="content-wrapper">
+                    <div class="header">
+                        <span class="title">Balcony Main</span>
+                        <span class="badge">B1</span>
+                    </div>
+                    <div class="content">
+                        <div class="price">
+                            <span class="price-amount">€7.500</span>
+                            <span class="price-label">min spent.</span>
+                        </div>
+                        <div class="info-pill">
+                            <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="3"/>
+                                <path d="M8 12h8M12 8v8"/>
+                            </svg>
+                            <span class="info-text">Includes max. 8 PAX + VIP Wristbands</span>
+                        </div>
+                        <button class="cta-button" id="reserve-btn">
+                            <span class="cta-text">Reserve Table</span>
+                            <span class="cta-arrow">→</span>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <h2 style="margin: 10px 0;">€7.500 <small style="font-size: 12px; font-weight: normal;">min spent.</small></h2>
-            <button class="reserve-btn" id="reserve-btn">Reserve Table →</button>
         </div>
 
     </div>

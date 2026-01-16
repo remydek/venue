@@ -343,7 +343,8 @@ function updatePopup() {
 
     popup.style.transform = `
         translate3d(${x}px, ${y}px, 0) 
-        translate(-50%, -100%) 
+        translate(-60%, -80%) 
+        scale(0.5)
         perspective(1000px) 
         rotateX(${-tiltX}deg)
     `;
