@@ -319,7 +319,7 @@ function initThreeJS(): void {
     );
 
     window.addEventListener('resize', onWindowResize);
-    initDevGUI();
+    // initDevGUI();
     animate(0);
 }
 
