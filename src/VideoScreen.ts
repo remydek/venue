@@ -26,8 +26,16 @@ export class VideoScreen {
         this.texture.needsUpdate = true;
         this.texture.colorSpace = THREE.SRGBColorSpace;
 
-        mesh.material = new THREE.MeshBasicMaterial({
+        // mesh.material = new THREE.MeshBasicMaterial({
+        //     map: this.texture,
+        //     toneMapped: false
+        // });
+
+        mesh.material = new THREE.MeshStandardMaterial({
             map: this.texture,
+            emissive: new THREE.Color(1, 1, 1),
+            emissiveMap: this.texture,
+            emissiveIntensity: 3.0,
             toneMapped: false
         });
 
