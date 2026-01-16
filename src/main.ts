@@ -596,11 +596,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerModal = document.getElementById('register-modal');
     const modalClose = document.getElementById('modal-close');
 
+    const reserveButton = document.getElementById('reserve-btn');
+
+    console.log("reserveButton", reserveButton)
+
+    const popupActionButton = document.querySelector('.waitlist-submit .submit-text');
+
     if (registerBtn && registerModal) {
         registerBtn.addEventListener('click', (e) => {
             e.preventDefault();
             registerModal.classList.add('active');
+
+            popupActionButton!.textContent = "JOIN WAITLIST NOW";
         });
+    }
+
+    if (reserveButton && registerModal) {
+        reserveButton.addEventListener('click', (e) => {
+            console.log("RESERVE CLICKEd")
+            e.preventDefault();
+            registerModal.classList.add('active');
+
+            popupActionButton!.textContent = "BOOK";
+        })
     }
 
     if (modalClose && registerModal) {
