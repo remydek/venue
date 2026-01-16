@@ -5,6 +5,7 @@ import * as dat from 'dat.gui';
 import { LightManager } from "./light_manager.ts";
 import { RenderManager } from "./render_manager.ts";
 import {CameraManager} from "./camera_manager.ts";
+import {Vector3} from "three";
 
 // Type definitions
 interface DevSettings {
@@ -62,7 +63,8 @@ let lightManager: LightManager;
 let renderManager : RenderManager;
 let cameraManager: CameraManager;
 
-let tableSelectors: THREE.Object3D[] = [];
+let tableSelectors: THREE.Object3D[][] = [];
+let screenMesh: THREE.Mesh;
 
 // Dev controls settings
 const devSettings: DevSettings = {
@@ -91,6 +93,12 @@ const devSettings: DevSettings = {
     logCamera: () => cameraManager.logCameraState()
 };
 
+function deselectTable() {
+    renderManager?.selectOutlineObjects([]);
+
+    tablePosition.set(0, 10000, 0);
+}
+
 // Initialize Three.js
 function initThreeJS(): void {
     const container = document.getElementById('threejs-container');
@@ -114,28 +122,52 @@ function initThreeJS(): void {
     cameraManager.initOrbitControls(renderManager.domElement);
 
     const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
+    const tap = new THREE.Vector2();
+    const worldPos = new THREE.Vector3();
 
-    // Double-click to get 3D position
-    renderManager.domElement.addEventListener('dblclick', (event: MouseEvent) => {
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    renderManager.domElement.addEventListener('pointerdown', e => {
+        tap.x = e.clientX;
+        tap.y = e.clientY;
+        console.log("Tap", tap);
+    });
 
-        raycaster.setFromCamera(mouse, cameraManager.camera);
+    renderManager.domElement.addEventListener('pointerup', e => {
+        if (Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 6) return; // was drag
+
+        tap.x = (e.clientX / window.innerWidth) * 2 - 1;
+        tap.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(tap, cameraManager.camera);
         const intersects = raycaster.intersectObjects(scene.children, true);
 
         if (intersects.length > 0) {
             const point = intersects[0].point;
             let root = findTableRoot(intersects[0].object);
             if (root) {
+                renderManager.selectOutlineObjects([]);
+
                 const center = new THREE.Vector3();
                 new THREE.Box3().setFromObject(root).getCenter(center);
                 cameraManager.flyToPoint(center);
+                cameraManager.unlockControls();
 
                 tablePosition.copy(center);
                 tablePosition.y += 0.017;
 
-                renderManager.selectOutlineObjects(tableSelectors);
+                for (let i = 0; i < tableSelectors.length; i++) {
+                    tableSelectors[i][0].getWorldPosition(worldPos);
+                    if (worldPos.distanceTo(center) < 0.05 ) {
+                        renderManager.selectOutlineObjects(tableSelectors[i]);
+                        break;
+                    }
+                    // var selected = root.getObjectById(tableSelectors[i][0].id);
+                    // if (selected) {
+                    //     renderManager.selectOutlineObjects(tableSelectors[i]);
+                    //     break;
+                    // }
+                }
+
+                // renderManager.selectOutlineObjects(tableSelectors[0]);
             }
 
             console.log(root);
@@ -214,10 +246,28 @@ function initThreeJS(): void {
                     cameraManager.addGLBCamera(child as THREE.Camera);
                 }
 
-                if (child.name.startsWith("table_selector_") && tableSelectors.length == 0) {
+                if (child.name.startsWith("table_selector_")) {
                     console.log("Table selector added", child);
-                    tableSelectors.push(child);
-                    tableSelectors.push(...child.children);
+                    var tableMeshes: THREE.Object3D[] = [];
+                    tableMeshes.push(child);
+                    tableMeshes.push(...child.children);
+                    tableSelectors.push(tableMeshes);
+                    // tableSelectors.push(child);
+                    // tableSelectors.push(...child.children);
+                }
+
+                if (child.name.includes('glass')) {
+                    let mesh = child as THREE.Mesh;
+                    if (mesh) {
+                        // (mesh.material as THREE.MeshStandardMaterial).depthWrite = true;
+                    }
+                    // child.userData.excludeOutline = true;
+                    // child.layers.set(1);
+                }
+
+                if (child.name.startsWith('LED_Screen.')) {
+                    console.log("Screen: " + child.name);
+                    screenMesh = child as THREE.Mesh;
                 }
             });
 
@@ -235,26 +285,6 @@ function initThreeJS(): void {
 
             cameraManager.fitToModel(model);
             populateGLBControls();
-
-            tableSelectors.forEach(obj => {
-                if ((obj as THREE.Mesh).isMesh) {
-                    const mesh = obj as THREE.Mesh;
-
-                    const material = mesh.material;
-
-                    // Handle multi-material meshes
-                    const materials = Array.isArray(material) ? material : [material];
-
-                    materials.forEach(mat => {
-                        mat.side = THREE.DoubleSide;
-                        // mat.depthTest = false;   // outline always visible
-                        // mat.depthWrite = false;
-                        mat.needsUpdate = true;
-                    });
-                }
-            });
-
-            renderManager.selectOutlineObjects(tableSelectors);
 
             // const startCamera = cameraManager.findCameraByName('camera_b')
             // if (startCamera) {
@@ -293,7 +323,7 @@ function initThreeJS(): void {
     animate(0);
 }
 
-const tablePosition = new THREE.Vector3(0, 1.5, 0);
+const tablePosition = new THREE.Vector3(0, 1000, 0);
 const popup = document.querySelector('#popup') as HTMLElement;
 
 function updatePopup() {
@@ -317,7 +347,7 @@ function updatePopup() {
         perspective(1000px) 
         rotateX(${-tiltX}deg)
     `;
-    
+
     popup.style.display = vector.z > 1 ? 'none' : 'block';
 }
 
@@ -649,48 +679,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Camera view buttons
-    const tableBBtn = document.getElementById('table-b-btn');
-    const tableB1Btn = document.getElementById('table-b1-btn');
     const topViewBtn = document.getElementById('top-view-btn');
     const freeViewBtn = document.getElementById('free-view-btn');
-
-    if (tableBBtn) {
-        tableBBtn.addEventListener('click', () => {
-            console.log('Table B button clicked');
-            cameraManager.unlockControls();
-            const cam = cameraManager.findCameraByName('camera_b');
-            if (cam) {
-                cameraManager.flyToCamera(cam, false);
-            }
-        });
-    }
-
-    if (tableB1Btn) {
-        tableB1Btn.addEventListener('click', () => {
-            console.log('Table B1 button clicked');
-            cameraManager.unlockControls();
-            const cam = cameraManager.findCameraByName('camera_b1');
-            if (cam) {
-                cameraManager.flyToCamera(cam, false);
-            }
-        });
-    }
 
     if (topViewBtn) {
         topViewBtn.addEventListener('click', () => {
             console.log('Top View button clicked');
-            const cam = cameraManager.findCameraByName('camera_top');
-            if (cam) {
-                cameraManager.flyToCamera(cam, true);
-            }
+            cameraManager.flyToPoint(new THREE.Vector3(0, 0, 0), 1.5, 0);
+            cameraManager.lockControls();
+
+            deselectTable();
         });
     }
 
     if (freeViewBtn) {
         freeViewBtn.addEventListener('click', () => {
             cameraManager.unlockControls();
-            cameraManager.fitToModel(model);
+            cameraManager.flyToPoint(new THREE.Vector3(0, 0.1, 0), 0.5, Math.PI / 4, Math.PI / 3);
+            // cameraManager.fitToModel(model);
+
+            deselectTable();
         });
     }
 
