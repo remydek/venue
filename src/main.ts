@@ -598,6 +598,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const reserveButton = document.getElementById('reserve-btn');
 
+    const bookModal = document.getElementById('book-modal');
+    const bookModalClose = document.getElementById('modal-book-close');
+
     console.log("reserveButton", reserveButton)
 
     const popupActionButton = document.querySelector('.waitlist-submit .submit-text');
@@ -611,13 +614,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (reserveButton && registerModal) {
+    if (reserveButton && bookModal) {
         reserveButton.addEventListener('click', (e) => {
             console.log("RESERVE CLICKEd")
             e.preventDefault();
-            registerModal.classList.add('active');
-
-            popupActionButton!.textContent = "BOOK";
+            bookModal.classList.add('active');
         })
     }
 
@@ -625,6 +626,12 @@ document.addEventListener('DOMContentLoaded', () => {
         modalClose.addEventListener('click', () => {
             registerModal.classList.remove('active');
         });
+    }
+
+    if (bookModalClose && bookModal) {
+        bookModalClose.addEventListener('click', () => {
+            bookModal.classList.remove('active');
+        })
     }
 
     if (registerModal) {

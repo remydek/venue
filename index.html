@@ -271,6 +271,48 @@
         </div>
     </div>
 
+    <div class="glass-modal" id="book-modal">
+        <div class="glass-modal-backdrop"></div>
+        <div class="glass-modal-content waitlist-modal">
+            <button class="glass-close" id="modal-book-close">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+
+            <div class="glass-header">
+                <div class="glass-title-glow"></div>
+                <h2 class="glass-title">BOOKING TABLE</h2>
+                <p class="glass-subtitle">Secure your spot for the most exclusive tables at HÏ Ibiza</p>
+            </div>
+
+            <form class="waitlist-form">
+                <div class="form-group">
+                    <input type="text"  placeholder="Full Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" placeholder="Email Address" required>
+                </div>
+                <div class="form-group">
+                    <input type="tel" placeholder="Phone Number">
+                </div>
+                <div class="form-group">
+                    <select  required>
+                        <option value="" disabled selected>Select Preferred Table</option>
+                        <option value="table-b">Table B - Premium View</option>
+                        <option value="table-b1">Table B1 - VIP Section</option>
+                        <option value="any">Any Available</option>
+                    </select>
+                </div>
+                <button type="submit" class="waitlist-submit">
+                    <span class="submit-text">BOOK</span>
+                    <span class="submit-loader"></span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+
     <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
