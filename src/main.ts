@@ -483,7 +483,7 @@ function initDevGUI(): void {
         renderManager.outlineEffect.blurPass.scale = v;
     })
 
-    outlineFolder.addColor({ color: 0xffffff }, 'color').onChange((v) => {
+    outlineFolder.addColor({ color: 0xff38 }, 'color').onChange((v) => {
         renderManager.setOutlineColor(v);
     });
 

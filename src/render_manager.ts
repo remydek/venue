@@ -93,14 +93,15 @@ export class RenderManager {
 
         this.outlineEffect = new OutlineEffect(this.scene, this.camera, {
             blendFunction: BlendFunction.SCREEN,
-            edgeStrength: 2.5,
+            edgeStrength: 10.0,
             pulseSpeed: 0.3,
-            visibleEdgeColor: 0xffffff,
+            visibleEdgeColor: 0xff38,
             hiddenEdgeColor: 0x22090a,
             height: 480,
-            blur: false,
+            blur: true,
             xRay: true
         });
+        this.outlineEffect.blurPass.scale = 10;
 
         // Add effects pass
         const effectPass = new EffectPass(
