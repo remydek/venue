@@ -29,7 +29,7 @@ export class CameraManager {
         this.controls.enablePan = true;
         this.controls.enableZoom = true;
         this.controls.minDistance = 0.1;
-        this.controls.maxDistance = 200;
+        this.controls.maxDistance = 3;
         this.controls.maxPolarAngle = Math.PI / 2 - 0.05;
         console.log('Orbit controls initialized');
     }
