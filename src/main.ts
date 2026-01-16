@@ -5,7 +5,7 @@ import * as dat from 'dat.gui';
 import { LightManager } from "./light_manager.ts";
 import { RenderManager } from "./render_manager.ts";
 import {CameraManager} from "./camera_manager.ts";
-import {Vector3} from "three";
+import {VideoScreen} from "./VideoScreen.ts";
 
 // Type definitions
 interface DevSettings {
@@ -64,7 +64,6 @@ let renderManager : RenderManager;
 let cameraManager: CameraManager;
 
 let tableSelectors: THREE.Object3D[][] = [];
-let screenMesh: THREE.Mesh;
 
 // Dev controls settings
 const devSettings: DevSettings = {
@@ -252,8 +251,6 @@ function initThreeJS(): void {
                     tableMeshes.push(child);
                     tableMeshes.push(...child.children);
                     tableSelectors.push(tableMeshes);
-                    // tableSelectors.push(child);
-                    // tableSelectors.push(...child.children);
                 }
 
                 if (child.name.includes('glass')) {
@@ -265,9 +262,12 @@ function initThreeJS(): void {
                     // child.layers.set(1);
                 }
 
-                if (child.name.startsWith('LED_Screen.')) {
+                if (child.name.startsWith('LED_Screen001')) {
                     console.log("Screen: " + child.name);
-                    screenMesh = child as THREE.Mesh;
+
+                    new VideoScreen(child as THREE.Mesh, 'LEDSCREEN.mp4', {
+                        delay: 1000
+                    });
                 }
             });
 
