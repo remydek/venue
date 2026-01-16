@@ -74,7 +74,7 @@ const devSettings: DevSettings = {
     directIntensity: 2.5,
     directColor: '#ffffff',
     punctualLights: true,
-    envIntensity: 1.5,
+    envIntensity: 3,
     showEnvBackground: false,
     bloomEnabled: true,
     bloomIntensity: 0.17,
